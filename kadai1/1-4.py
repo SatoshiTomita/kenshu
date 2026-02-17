@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
+os.makedirs("output", exist_ok=True)
 data = np.array([[1,2,3], [4,5,6], [7,8,9]]) # ただの一例です
 
 min_value = 0
