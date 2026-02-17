@@ -1,0 +1,48 @@
+% 日本語レポート雛形（LuaLaTeX / LuaTeX-ja）
+\documentclass[12pt,a4paper]{ltjsarticle}
+
+% パッケージ
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+
+% メタ情報
+\title{レポートタイトル}
+\author{著者名}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  ここに要旨を入力します。
+\end{abstract}
+
+\section{はじめに}
+背景と目的を書きます。
+
+\section{方法}
+実験や解析の手法を記述します。
+
+\section{結果}
+結果を示します。図や表は以下のように挿入します。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\linewidth]{example-image}
+  \caption{例の図}
+  \label{fig:example}
+\end{figure}
+
+\section{考察}
+結果の解釈や今後の課題を書きます。
+
+\section{結論}
+結論を簡潔にまとめます。
+
+\begin{thebibliography}{9}
+  \bibitem{latex} Leslie Lamport. \textit{LaTeX: A Document Preparation System}. 2nd ed., 1994.
+\end{thebibliography}
+
+\end{document}

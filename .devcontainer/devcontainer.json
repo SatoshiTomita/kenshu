@@ -1,0 +1,13 @@
+{
+	"name": "latex-templates",
+	"image": "ghcr.io/tetsugo02/latex-dev-container:latest",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"James-Yu.latex-workshop",
+				"oderwat.indent-rainbow",
+				"ms-vscode-remote.remote-containers"
+			]
+		}
+	}
+}
