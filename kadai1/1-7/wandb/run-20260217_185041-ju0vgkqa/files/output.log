@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-7/main.py", line 53, in <module>
+    trainer = Trainer(model, train_loader, validation_loader, optimizer, loss_fn, cfg.train_data.epoch)
+TypeError: Trainer.__init__() missing 1 required positional argument: 'save_path'
