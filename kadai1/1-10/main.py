@@ -34,7 +34,17 @@ x = np.cos(theta)
 y = np.sin(theta*2)
 
 data = np.stack([x, y], axis=1)
-
+# 1-10:データの形状を[Batch,Sequence,Dimention]に
+# num_rounds:何周目か
+# points_per_round:その周の中の何番目か
+# 2:x座標とy座標
+data=data.reshape(num_rounds,points_per_round,2)
+print(data.shape)
+# 1-10:t=0~(T-1)
+input_data=data[:,-1,:] 
+# 1-10t=1~T
+target_data=data[:,1,:]
+input_step=1
 plt.plot(data[:, 0], data[:, 1])
 
 plt.savefig("./output/eight.png")

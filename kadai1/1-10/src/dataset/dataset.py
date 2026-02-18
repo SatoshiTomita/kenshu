@@ -14,6 +14,7 @@ class myDataset(Dataset):
     
     def __len__(self):
         return len(self.data2)
-
-    def __getitem__(self, index):
-        return self.data1[index:index+self.step].view(-1), self.data2[index]
+    
+    # データセットを作る前にデータの形状を整えているのでこの処理を外す
+    # def __getitem__(self, index):
+    #     return self.data1[index:index+self.step].view(-1), self.data2[index]
