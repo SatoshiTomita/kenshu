@@ -18,8 +18,8 @@ with open('./conf/config.yaml', 'r') as yml:
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(f"result/{cfg.wandb.train_name}", exist_ok=True)
 
-# modelのdeviceを確認
-device=torch.device("mps" if torch.cuda.is_available()else "cpu")
+# 修正1-9modelのdeviceを確認
+device=torch.device("mps" if torch.mps.is_available()else "cpu")
 
 
 wandb.init(project=cfg.wandb.project_name, config=cfg.wandb.config, name=cfg.wandb.train_name)
@@ -60,9 +60,11 @@ trainer.train_model()
 
 wandb.finish()
 
-predict=Predict(cfg,model)
+# 修正1-9:deviceを追加する
+predict=Predict(cfg,model,device)
 
-test_loss=predict.test_loss(test_loader,loss_fn)
+# 修正1-9:deviceを追加する
+test_loss=predict.test_loss(test_loader,loss_fn,device)
 close_test=predict.predict()
 
 fig=plt.figure(figsize=(12,8))

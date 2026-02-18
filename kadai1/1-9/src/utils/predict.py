@@ -4,20 +4,26 @@ import numpy as np
 class Predict():
     def __init__(self,
                  cfg,
-                 model):
+                 model,
+                 device): 
         self.model = model
         self.cfg = cfg
-        self.data = prepare_data(cfg)
+        # deviceの保存
+        self.device=device  
+        # 初期データをdeviceへ
+        self.data = prepare_data(cfg).to(device)
     
     def update_model(self, model):
         self.model = model
     
-    def test_loss(self, test_dataloader, loss_fn):
+    def test_loss(self, test_dataloader, loss_fn,device):
         self.model.eval()
         minibatch_test_loss = 0
         with torch.no_grad():
             for j, batch in enumerate(test_dataloader):
                 input, target = batch
+                # deviceへ転送
+                input,target=input.to(device),target.to(device)
                 prediction = self.model(input)
                 test_loss = loss_fn(prediction, target)
 
@@ -30,13 +36,14 @@ class Predict():
         predictions_list = []
         
         for i in range(self.cfg.train_data.input_timestep):
-            predictions_list.append(np.reshape(self.data.detach().clone().numpy(), [self.cfg.train_data.input_timestep, -1])[i])
+            # 修正1-9 numpyする前にcpuを挟む様にする
+            predictions_list.append(np.reshape(self.data.detach().clone().cpu().numpy(), [self.cfg.train_data.input_timestep, -1])[i])
             
         with torch.no_grad():
             for _ in range(500):
                 prediction = self.model(self.data)
-
-                predictions_list.append(prediction.detach().clone().numpy())
+                # numpyする前にcpuを挟む
+                predictions_list.append(prediction.detach().clone().cpu().numpy())
 
                 self.data = torch.cat([self.data, prediction], axis=0)[2:]
 
