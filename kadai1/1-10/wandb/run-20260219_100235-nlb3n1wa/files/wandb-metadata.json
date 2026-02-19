@@ -1,0 +1,17 @@
+{
+  "os": "macOS-14.2.1-arm64-arm-64bit-Mach-O",
+  "python": "CPython 3.13.12",
+  "startedAt": "2026-02-19T01:02:35.945735Z",
+  "program": "/Users/tomita/kenshu/kadai1/1-10/main.py",
+  "codePath": "kadai1/1-10/main.py",
+  "codePathLocal": "main.py",
+  "git": {
+    "remote": "https://github.com/SatoshiTomita/kenshu.git",
+    "commit": "0d215b7a2532a6ebe5419a4a5530b9b443c09ad0"
+  },
+  "email": "s.tomita2023@keio.jp",
+  "root": "/Users/tomita/kenshu/kadai1/1-10",
+  "host": "murata-labnoMacBook-Air.local",
+  "executable": "/Users/tomita/kenshu/.venv/bin/python3",
+  "writerId": "5qukg1cvbuch03wmj3e6i5ky7b0ipscc"
+}

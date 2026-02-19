@@ -1,0 +1,12 @@
+(100, 100, 2)
+  0%|                                                   | 0/1000 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-10/main.py", line 71, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 59, in train_loop
+    model.initialize(input.shape[0])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+TypeError: RNN.initialize() missing 1 required positional argument: 'device'

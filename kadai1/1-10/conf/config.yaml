@@ -6,7 +6,7 @@ wandb:
 
 gen_data:
   points_per_round: 100
-  num_rounds: 5
+  num_rounds: 100
   min: 0
   max: 2 # ここでは np.pi と書けないので π を除いています
   data_length: 500

@@ -1,0 +1,20 @@
+(5, 100, 2)
+/Users/tomita/kenshu/kadai1/1-10/src/dataloader/dataloader.py:13: UserWarning: Length of split at index 0 is 0. This might result in an empty dataset.
+  train_data, validation_data, test_data = random_split(self.mydataset, lengths=self.ratio)
+/Users/tomita/kenshu/kadai1/1-10/src/dataloader/dataloader.py:13: UserWarning: Length of split at index 1 is 0. This might result in an empty dataset.
+  train_data, validation_data, test_data = random_split(self.mydataset, lengths=self.ratio)
+/Users/tomita/kenshu/kadai1/1-10/src/dataloader/dataloader.py:13: UserWarning: Length of split at index 2 is 0. This might result in an empty dataset.
+  train_data, validation_data, test_data = random_split(self.mydataset, lengths=self.ratio)
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-10/main.py", line 60, in <module>
+    train_loader, validation_loader, test_loader = mydataloader.prepare_data()
+                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/dataloader/dataloader.py", line 15, in prepare_data
+    train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True, num_workers=0)
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 394, in __init__
+    sampler = RandomSampler(dataset, generator=generator)  # type: ignore[arg-type]
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/utils/data/sampler.py", line 149, in __init__
+    raise ValueError(
+        f"num_samples should be a positive integer value, but got num_samples={self.num_samples}"
+    )
+ValueError: num_samples should be a positive integer value, but got num_samples=0

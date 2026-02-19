@@ -9,7 +9,7 @@ import wandb
 
 from src.dataset.dataset import myDataset
 from src.dataloader.dataloader import myDataloader
-from src.model.model import FNN
+from src.model.model import RNN
 from src.trainer.trainer import Trainer
 from src.utils.predict import Predict
     
@@ -59,7 +59,9 @@ mydataset = myDataset(input_data, target_data, input_step)
 mydataloader = myDataloader(mydataset, cfg.train_data.split_ratio, cfg.train_data.batch_size)
 train_loader, validation_loader, test_loader = mydataloader.prepare_data()
 
-model = FNN(input_dim=input_step*2, hidden_dim=cfg.model.hidden_dim, output_dim=2).to(device)
+# model = FNN(input_dim=input_step*2, hidden_dim=cfg.model.hidden_dim, output_dim=2).to(device)
+# 1-10モデルをFNNからRNNに変更
+model=RNN(input_dim=2,hidden_dim=cfg.model.hidden_dim,output_dim=2).to(device)
 loss_fn = nn.MSELoss()
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.optimizer.learning_rate, weight_decay=cfg.optimizer.weight_decay)
@@ -75,7 +77,8 @@ predict=Predict(cfg,model,device)
 
 # 修正1-9:deviceを追加する
 test_loss=predict.test_loss(test_loader,loss_fn,device)
-close_test=predict.predict()
+# 修正1-10　RNNの関数を呼び出す
+close_test=predict.predict_withRNN()
 
 fig=plt.figure(figsize=(12,8))
 ax=fig.add_subplot(111)

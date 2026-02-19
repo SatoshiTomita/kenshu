@@ -1,0 +1,19 @@
+(100, 100, 2)
+  0%|                                                   | 0/1000 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-10/main.py", line 71, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 59, in train_loop
+    model.initialize(input.shape[0])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/model/model.py", line 30, in initialize
+    self.hidden=torch.zeros(1,batch_size,self.hidden_dim).to(self.device)
+                                                             ^^^^^^^^^^^
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1965, in __getattr__
+    raise AttributeError(
+        f"'{type(self).__name__}' object has no attribute '{name}'"
+    )
+AttributeError: 'RNN' object has no attribute 'device'

@@ -1,0 +1,11 @@
+{"time":"2026-02-19T10:08:55.964079+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-02-19T10:08:56.282497+09:00","level":"INFO","msg":"stream: created new stream","id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:56.28256+09:00","level":"INFO","msg":"handler: started","stream_id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:56.282754+09:00","level":"INFO","msg":"stream: started","id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:56.282768+09:00","level":"INFO","msg":"sender: started","stream_id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:56.282774+09:00","level":"INFO","msg":"writer: started","stream_id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:57.381406+09:00","level":"INFO","msg":"stream: closing","id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:58.284133+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-02-19T10:08:58.54512+09:00","level":"INFO","msg":"handler: closed","stream_id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:58.545635+09:00","level":"INFO","msg":"sender: closed","stream_id":"ancpnwgv"}
+{"time":"2026-02-19T10:08:58.545689+09:00","level":"INFO","msg":"stream: closed","id":"ancpnwgv"}

@@ -55,6 +55,8 @@ def train_loop(model, train_dataloader, optimizer, loss_fn,device):
         input, target = batch
         # 修正1-9　batchからinputとtargetに分割したデータを専用メモリへとコピーする
         input,target=input.to(device),target.to(device)
+        # 修正:1-10
+        model.initialize(input.shape[0],device)
         prediction = model(input)
         train_loss = loss_fn(prediction, target)
 
@@ -76,6 +78,10 @@ def validation_loop(model, val_dataloader, loss_fn,device):
             input, target = batch
             # validation時もdeviceへ送る様にする
             input,target=input.to(device),target.to(device)
+            # 1-10:RNNの場合はこの１行を追加する
+            # input.shape[0]はバッチサイズ
+            # 前の隠れ状態を初期化し、新たなバッチサイズで作り直す
+            model.initialize(input.shape[0],device)
             prediction = model(input)
             validation_loss = loss_fn(prediction, target)
 

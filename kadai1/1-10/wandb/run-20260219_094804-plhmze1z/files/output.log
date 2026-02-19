@@ -1,0 +1,9 @@
+(5, 100, 2)
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-10/main.py", line 60, in <module>
+    train_loader, validation_loader, test_loader = mydataloader.prepare_data()
+                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/dataloader/dataloader.py", line 15, in prepare_data
+    raw_data=self.mydataset.data[0,0]
+             ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'myDataset' object has no attribute 'data'. Did you mean: 'data1'?
