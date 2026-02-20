@@ -16,4 +16,6 @@ class myDataset(Dataset):
         return len(self.data2)
 
     def __getitem__(self, index):
+        # index番目からindex+step番目までの連続したデータをひとまとめにして返す
+        # view(-1)でデータを1次元ベクトルに平坦化（例data1[1 2 3]data2[1]番目のデータを取り出す
         return self.data1[index:index+self.step].view(-1), self.data2[index]
