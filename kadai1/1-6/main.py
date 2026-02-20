@@ -38,10 +38,11 @@ mydataloader = myDataloader(mydataset, split_ratio, batch_size)
 train_loader, validation_loader, test_loader = mydataloader.prepare_data()
 
 hidden_dim=10
-
+# モデルの呼び出し
 model=FNN(input_dim=input_step*2,hidden_dim=hidden_dim,output_dim=2)
+# 損失関数の定義
 loss_fn=nn.MSELoss()
 learning_rate=1.0e-4
 weight_decay=1.0e-6
-
+# 最適化関数の定義
 optimizer=torch.optim.AdamW(model.parameters(),lr=learning_rate,weight_decay=weight_decay)
