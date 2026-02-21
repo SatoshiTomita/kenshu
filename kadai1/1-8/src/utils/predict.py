@@ -28,16 +28,16 @@ class Predict():
     
     def predict(self):
         predictions_list = []
-        
+        # 予測ループ
         for i in range(self.cfg.train_data.input_timestep):
             predictions_list.append(np.reshape(self.data.detach().clone().numpy(), [self.cfg.train_data.input_timestep, -1])[i])
             
         with torch.no_grad():
             for _ in range(500):
                 prediction = self.model(self.data)
-
+                # 予測した新しい1点をリストに入れる
                 predictions_list.append(prediction.detach().clone().numpy())
-
+                # AIが出した答えpredictionをcatメソッドを使い連結
                 self.data = torch.cat([self.data, prediction], axis=0)[2:]
 
         return np.stack(predictions_list)

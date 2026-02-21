@@ -14,7 +14,7 @@ from src.trainer.trainer import Trainer
     
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs("output", exist_ok=True)
-
+# yamlのファイルを読み込み
 with open('./conf/config.yaml', 'r') as yml:
     cfg = Box(yaml.safe_load(yml))
 

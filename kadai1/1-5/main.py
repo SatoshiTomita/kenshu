@@ -23,9 +23,10 @@ plt.plot(data[:, 0], data[:, 1])
 plt.savefig("./output/eight.png")
 
 input_step = 2
-
+# 最後の行だけ除外
 input_data = data[:-1, :] # 最後から1つ前まで(0 ~ timestep-1)
 target_data = data[input_step:, :] # input_stepから最後まで(input_step ~ timestep)
+# 最初の数行をスキップする
 
 mydataset = myDataset(input_data, target_data, input_step)
 
