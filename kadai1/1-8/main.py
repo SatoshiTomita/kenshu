@@ -6,13 +6,19 @@ import torch
 from torch import nn
 import yaml
 import wandb
-
+import random
 from src.dataset.dataset import myDataset
 from src.dataloader.dataloader import myDataloader
 from src.model.model import FNN
 from src.trainer.trainer import Trainer
 from src.utils.predict import Predict
-    
+seed = 1
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(seed)
 with open('./conf/config.yaml', 'r') as yml:
     cfg = Box(yaml.safe_load(yml))
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +46,8 @@ plt.savefig("./output/eight.png")
 input_step = cfg.train_data.input_timestep
 
 input_data = data[:-1, :]
+# 最初の学習を始めるためのヒントを切り出す
+# 最初からinputstepまで
 target_data = data[input_step:, :]
 
 mydataset = myDataset(input_data, target_data, input_step)
