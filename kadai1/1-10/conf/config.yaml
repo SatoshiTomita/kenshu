@@ -18,7 +18,7 @@ train_data:
   epoch: 1000
   
 model:
-  hidden_dim: 10
+  hidden_dim: 128
 
 optimizer:
   learning_rate: 1.0e-4
