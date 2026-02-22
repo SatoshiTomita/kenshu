@@ -5,13 +5,14 @@ class Predict():
     def __init__(self,
                  cfg,
                  model,
-                 device): 
+                 device,all_data): 
         self.model = model
         self.cfg = cfg
         # deviceの保存
         self.device=device  
         # 初期データをdeviceへ
         self.data = prepare_data(cfg).to(device)
+        self.all_data = torch.tensor(all_data, dtype=torch.float32)
     
     def update_model(self, model):
         self.model = model
@@ -54,27 +55,36 @@ class Predict():
     # 学習時：軌道の時系列データ（正解データ）を入力として用いる
     # テスト時：１つ前の自分の予測結果を次のステップの入力として扱う
     def predict_withRNN(self):
-        predictions_list=[]
-        # 最初の1時刻のみデータを入力する
-        predictions_list.append(self.data[0,0].detach().cpu().numpy())
-        # 勾配を記録しない
+        predictions_list = []
+        self.model.eval()
+        
+        # 1. データの形状を整える（以前の修正のまま）
+        if self.all_data.dim() == 3:
+            initial_source = self.all_data[0:1, :, :]
+        else:
+            initial_source = self.all_data.unsqueeze(0)
+
+        input_step = self.cfg.train_data.input_timestep
+        current_input = initial_source[:, :input_step, :].to(self.device)
+        
+        for i in range(input_step):
+            predictions_list.append(current_input[0, i].cpu().numpy())
+            
         with torch.no_grad():
-            # データの形状を学習中と揃える
-            previous_step=self.data.reshape(1,1,2)
-            # 隠れ状態の初期化
-            self.model.initialize(1,self.device)
-            # しりとりの様に最後の時刻の出力を用いて次の時刻の予測を出す
-            for _ in range(20):
-                # 前の時刻の予測を使って次の座標の予測を出す
-                prediction=self.model(previous_step)
-                # 保存した座標をリストに追加する
-                predictions_list.append(prediction[0,0].detach().clone().cpu().numpy())
-                # 予測を次の時刻の入力に
-                previous_step=prediction
+            self.model.initialize(1, self.device)
+            for _ in range(150):
+                # 2. 予測。modelの戻り値は [1, 2] (2次元)
+                prediction = self.model(current_input) 
+                
+                # 3. リストに追加
+                predictions_list.append(prediction[0].cpu().numpy())
+                
+                # 4. ★ここを修正！ スライディングウィンドウの更新
+                # prediction [1, 2] を [1, 1, 2] に拡張してから cat する
+                next_point = prediction.unsqueeze(1) 
+                current_input = torch.cat([current_input[:, 1:, :], next_point], dim=1)
 
         return np.stack(predictions_list)
-
-
 def prepare_data(cfg):
     theta = np.linspace(cfg.gen_data.min, cfg.gen_data.max, cfg.gen_data.data_length)
 

@@ -1,0 +1,12 @@
+{"time":"2026-02-22T23:07:49.998218+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-02-22T23:07:50.412455+09:00","level":"INFO","msg":"stream: created new stream","id":"sckzivcz"}
+{"time":"2026-02-22T23:07:50.412862+09:00","level":"INFO","msg":"handler: started","stream_id":"sckzivcz"}
+{"time":"2026-02-22T23:07:50.412997+09:00","level":"INFO","msg":"stream: started","id":"sckzivcz"}
+{"time":"2026-02-22T23:07:50.413031+09:00","level":"INFO","msg":"sender: started","stream_id":"sckzivcz"}
+{"time":"2026-02-22T23:07:50.413056+09:00","level":"INFO","msg":"writer: started","stream_id":"sckzivcz"}
+{"time":"2026-02-22T23:25:25.599405+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-02-22T23:25:26.042467+09:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-02-22T23:25:26.051397+09:00","level":"INFO","msg":"stream: closing","id":"sckzivcz"}
+{"time":"2026-02-22T23:25:26.051708+09:00","level":"INFO","msg":"handler: closed","stream_id":"sckzivcz"}
+{"time":"2026-02-22T23:25:26.052005+09:00","level":"INFO","msg":"sender: closed","stream_id":"sckzivcz"}
+{"time":"2026-02-22T23:25:26.052025+09:00","level":"INFO","msg":"stream: closed","id":"sckzivcz"}

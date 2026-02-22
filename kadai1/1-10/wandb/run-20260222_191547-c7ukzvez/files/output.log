@@ -1,0 +1,28 @@
+(100, 100, 2)
+  0%|                                                                                                       | 0/1000 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/kenshu/kadai1/1-10/main.py", line 78, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/kenshu/kadai1/1-10/src/trainer/trainer.py", line 60, in train_loop
+    prediction = model(input)
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/tomita/kenshu/kadai1/1-10/src/model/model.py", line 35, in forward
+    out,hidden=self.rnn(input,self.hidden)
+               ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/tomita/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/rnn.py", line 698, in forward
+    raise RuntimeError(
+        f"For unbatched 2-D input, hx should also be 2-D but got {hx.dim()}-D tensor"
+    )
+RuntimeError: For unbatched 2-D input, hx should also be 2-D but got 3-D tensor

@@ -1,0 +1,37 @@
+{
+  "os": "macOS-14.2.1-arm64-arm-64bit-Mach-O",
+  "python": "CPython 3.13.12",
+  "startedAt": "2026-02-22T12:20:39.622160Z",
+  "program": "/Users/tomita/kenshu/kadai1/1-10/main.py",
+  "codePath": "kadai1/1-10/main.py",
+  "codePathLocal": "main.py",
+  "git": {
+    "remote": "https://github.com/SatoshiTomita/kenshu.git",
+    "commit": "8f64115d40d0e14ac1b89672f5b2aab0c8224043"
+  },
+  "email": "s.tomita2023@keio.jp",
+  "root": "/Users/tomita/kenshu/kadai1/1-10",
+  "host": "murata-labnoMacBook-Air.local",
+  "executable": "/Users/tomita/kenshu/.venv/bin/python3",
+  "cpu_count": 8,
+  "cpu_count_logical": 8,
+  "disk": {
+    "/": {
+      "total": "1995218165760",
+      "used": "478129377280"
+    }
+  },
+  "memory": {
+    "total": "17179869184"
+  },
+  "apple": {
+    "name": "Apple M1",
+    "ecpuCores": 4,
+    "pcpuCores": 4,
+    "gpuCores": 8,
+    "memoryGb": 16,
+    "swapTotalBytes": "3221225472",
+    "ramTotalBytes": "17179869184"
+  },
+  "writerId": "74gn63clsmc85eouphvwcxazjwbdpiq5"
+}

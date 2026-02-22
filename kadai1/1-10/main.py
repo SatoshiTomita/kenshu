@@ -51,10 +51,24 @@ plt.savefig("./output/eight.png")
 
 input_step = cfg.train_data.input_timestep
 
-input_data = data[:-1, :]
-target_data = data[input_step:, :]
+# 1. データを分断せず、長い一本の時系列にする [全ステップ数, 2]
+data = data.reshape(-1, 2) 
 
-mydataset = myDataset(input_data, target_data, input_step)
+# 2. スライディングウィンドウ形式で切り出す
+# input_data:  t=0 ~ T-1  (n番目からinput_step個分)
+# target_data: t=1 ~ T    (n+1番目からinput_step個分)
+# ※ myDatasetの中でさらに窓を作る想定なら、ここでは全体のペアを作ります
+input_data = data[:-1]  # 最後の一点を除くすべて
+target_data = data[1:]  # 最初の一点を除くすべて
+
+input_step = cfg.train_data.input_timestep # ここは10になる
+
+# データを一本の時系列にする [Total_Points, 2]
+flat_data = data.reshape(-1, 2) 
+
+# ★修正：input_data, target_data を個別に作らず、flat_data をそのまま渡す
+# myDataset側で「10点から次の1点を予測する」というスライディングウィンドウ処理を行います
+mydataset = myDataset(flat_data, input_step)
 
 mydataloader = myDataloader(mydataset, cfg.train_data.split_ratio, cfg.train_data.batch_size)
 train_loader, validation_loader, test_loader = mydataloader.prepare_data()
@@ -73,7 +87,7 @@ trainer.train_model()
 wandb.finish()
 
 # 修正1-9:deviceを追加する
-predict=Predict(cfg,model,device)
+predict=Predict(cfg,model,device,data)
 
 # 修正1-9:deviceを追加する
 test_loss=predict.test_loss(test_loader,loss_fn,device)

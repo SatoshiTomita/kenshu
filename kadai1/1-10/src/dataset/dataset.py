@@ -3,22 +3,24 @@ import torch
 from torch.utils.data import Dataset
 
 class myDataset(Dataset):
-    def __init__(self, 
-            data1: np.ndarray, 
-            data2: np.ndarray,
-            input_step: int):
-
-        self.data2 = torch.from_numpy(data2).float()
-        self.data1 = torch.from_numpy(data1).float()
-        self.step = input_step
-    
-    def __len__(self):
-        return len(self.data2)
-    
-    def __getitem__(self, index):
-        # index番目の「1周分（100ステップ）のデータ」を丸ごと返す
-        # RNNは [Seq, Dim] の形を期待するので view(-1) は不要です
-        input_seq = self.data1[index]  # shape: [100, 2]
-        target_seq = self.data2[index] # shape: [100, 2]
+    def __init__(self, data, input_step):
+        # data: [Total_Points, 2] の numpy配列を想定
+        self.samples = []
+        self.targets = []
         
-        return input_seq, target_seq
+        # 10ステップの窓をスライドさせながら、入力(10点)と正解(次の一点)を作る
+        for i in range(len(data) - input_step):
+            # iからi+10までが入力
+            self.samples.append(data[i : i + input_step])
+            # i+10がターゲット
+            self.targets.append(data[i + input_step])
+            
+        self.samples = torch.tensor(np.array(self.samples), dtype=torch.float32)
+        self.targets = torch.tensor(np.array(self.targets), dtype=torch.float32)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        # ここで返る input_seq は [10, 2] の形状になります
+        return self.samples[index], self.targets[index]

@@ -30,13 +30,9 @@ class RNN(nn.Module):
     self.hidden=torch.zeros(1,batch_size,self.hidden_dim).to(device)
 
   
-  def forward(self,input):
-    # self.rnnに入力データ(input)と前のステップの記憶のself.hiddenを渡し各ステップの特徴量であるoutと更新された記憶のhiddenを受け取る
-    out,hidden=self.rnn(input,self.hidden)
-    # rnnが計算した特徴量をlinear層に通して最終的な予測値に変換する
-    output=self.linear(out)
-    # 新しく更新された記憶をクラス変数のself.hiddenに代入して隠れ状態を引き継ぐ
-    self.hidden=hidden
-    return output
+  def forward(self, input):
+    out, _ = self.rnn(input, None)
+    # 10ステップの出力のうち、最後のステップ [:, -1, :] だけを取り出す
+    last_step_out = out[:, -1, :]
+    return self.linear(last_step_out)
 
-  
