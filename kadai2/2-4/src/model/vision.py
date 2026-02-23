@@ -95,55 +95,6 @@ class Encoder(nn.Module):
             )
             layers.append(nn.ReLU())
         return nn.Sequential(*layers)
-def _build_convtranspose_layers(
-self, 
-channels: tuple,
-kernels: tuple,
-strides: tuple,
-paddings: tuple,
-latent_obs_dim: int,
-):
-  layers = []
-  for i in range(len(channels)-1):
-      layers.append(
-          nn.ConvTranspose2d(
-              in_channels=channels[i],
-              out_channels=channels[i+1],
-              kernel_size=kernels[i],
-              stride=strides[i],
-              padding=paddings[i],
-          )
-      )
-      if i < len(channels) - 1:
-        layers.append(nn.ReLU())
-      else:
-        layers.append(nn.Sigmoid())
-  return nn.Sequential(*layers)
-
-def _build_convtranspose_layers(
-self, 
-channels: tuple,
-kernels: tuple,
-strides: tuple,
-paddings: tuple,
-latent_obs_dim: int,
-):
-  layers = []
-  for i in range(len(channels)-1):
-      layers.append(
-          nn.ConvTranspose2d(
-              in_channels=channels[i],
-              out_channels=channels[i+1],
-              kernel_size=kernels[i],
-              stride=strides[i],
-              padding=paddings[i],
-          )
-      )
-      if i < len(channels) - 1:
-        layers.append(nn.ReLU())
-      else:
-        layers.append(nn.Sigmoid()) # 出力層の活性化関数は要注意
-  return nn.Sequential(*layers)
 
 class Decoder(nn.Module):
     def __init__(
