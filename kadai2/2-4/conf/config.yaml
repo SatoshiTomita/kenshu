@@ -23,3 +23,9 @@ model:
 optimizer:
   learning_rate: 1.0e-4
   weight_decay: 1.0e-6
+
+params:
+    channels: []
+    kernels: []
+    strides: []
+    paddings: []
