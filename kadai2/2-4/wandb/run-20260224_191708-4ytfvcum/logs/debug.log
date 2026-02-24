@@ -17,3 +17,5 @@ config: {'device': 'cuda:0', '_wandb': {}}
 2026-02-24 19:17:09,678 INFO    MainThread:92821 [wandb_run.py:_redirect():2442] Wrapping output streams.
 2026-02-24 19:17:09,678 INFO    MainThread:92821 [wandb_run.py:_redirect():2465] Redirects installed.
 2026-02-24 19:17:09,681 INFO    MainThread:92821 [wandb_init.py:init():1082] run started, returning control to user process
+2026-02-24 19:53:54,682 INFO    wandb-AsyncioManager-main:92821 [service_client.py:_forward_responses():134] Reached EOF.
+2026-02-24 19:53:54,683 INFO    wandb-AsyncioManager-main:92821 [mailbox.py:close():155] Closing mailbox, abandoning 1 handles.

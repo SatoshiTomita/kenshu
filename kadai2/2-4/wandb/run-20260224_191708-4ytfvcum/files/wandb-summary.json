@@ -1,0 +1,1 @@
+{"validation_kld_loss":1.2960299500264227e-11,"_timestamp":1.7719304346810508e+09,"epoch":99,"train_recon_loss":725.4888916015625,"validation_recon_loss":725.8068148803711,"_runtime":2205,"validation_total_loss":725.8068148803711,"_step":99,"train_total_loss":725.4888916015625,"_wandb":{"runtime":2205},"train_kld_loss":8.319150923696839e-12}
