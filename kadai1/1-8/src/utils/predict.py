@@ -44,7 +44,11 @@ class Predict():
 
 
 def prepare_data(cfg):
-    theta = np.linspace(cfg.gen_data.min, cfg.gen_data.max, cfg.gen_data.data_length)
+    min_value = cfg.gen_data.min
+    max_value = cfg.gen_data.max * np.pi
+    points_per_round = cfg.gen_data.points_per_round
+    num_rounds = cfg.gen_data.num_rounds
+    theta = np.linspace(min_value, max_value * num_rounds, points_per_round * num_rounds)
 
     x = np.cos(theta)
     y = np.sin(theta*2)
