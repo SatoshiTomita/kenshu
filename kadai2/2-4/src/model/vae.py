@@ -24,7 +24,7 @@ class VAE(nn.Module):
       cfg.model.decoder.kernels,
       cfg.model.decoder.strides,
       cfg.model.decoder.paddings,
-      cfg.model.decoder.latent_obs_dim,
+      cfg.model.latent_obs_dim,
       cfg.model.mlp.hidden_dim,
       cfg.model.mlp.layers
     )

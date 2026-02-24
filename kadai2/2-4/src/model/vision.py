@@ -29,12 +29,13 @@ def _build_mlp(in_dim: int, out_dim: int, hidden_dim: int, n_layers: int):
     if n_layers == 0:
         layers.append(nn.Linear(in_dim, out_dim))
         layers.append(nn.ReLU())
+    # 多層にすると情報が失われる
     else:
         layers.append(nn.Linear(in_dim, hidden_dim))
         layers.append(nn.ReLU())
         for _ in range(n_layers-1):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.Linear())
         layers.append(nn.Linear(hidden_dim, out_dim))
     return nn.Sequential(*layers)
 
@@ -161,6 +162,7 @@ class Decoder(nn.Module):
                     kernel_size=kernels[i],
                     stride=strides[i],
                     padding=paddings[i],
+                    output_padding=1
                 )
             )
         if i < len(channels) - 1:

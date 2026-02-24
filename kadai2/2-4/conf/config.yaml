@@ -1,38 +1,32 @@
 wandb:
-  project_name: "daimon1"
+  project_name: "daimon2"
   train_name: "2-5_1"
   config:
     device: "cuda:0"
-
-gen_data:
-  points_per_round: 100
-  num_rounds: 5
-  min: 0
-  max: 2 # ここでは np.pi と書けないので π を除いています
-  data_length: 500
   
 train_data:
-  input_timestep: 10
-  split_ratio: [0.7, 0.2, 0.1]
   batch_size: 50
   epoch: 100
   
 model:
   encoder:
     channels: [16, 32]
-    kernels:  [4, 4]
+    # kernelは奇数の方がいい
+    kernels:  [3, 3]
     strides:  [2, 2]
     paddings: [1, 1]
   decoder:
     channels: [32, 16, 1]
-    kernels:  [4, 4]
-    strides:  [2, 2]
-    paddings: [1, 1]
-    latent_obs_dim: 2
-  latent_obs_dim: 2
+    # kernelは奇数の方がいい
+    kernels:  [3, 3,3]
+    strides:  [2, 2,2]
+    paddings: [1, 1,1]
+  # 特徴量をフラットにした際の次元
+  latent_obs_dim: 16
   mlp:
-   hidden_dim: 3
-   layers: 3
+   hidden_dim: 128
+  #  0でないと情報が失われる
+   layers: 0
 
 
 

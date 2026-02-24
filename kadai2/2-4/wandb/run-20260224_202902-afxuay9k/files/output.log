@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 35, in <module>
+    model=VAE().to(device)
+          ~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vae.py", line 22, in __init__
+    self.decoder=Decoder(
+                 ~~~~~~~^
+      cfg.model.decoder.channels,
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+      cfg.model.mlp.layers
+      ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vision.py", line 117, in __init__
+    self.decoder = self._build_convtranspose_layers(
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        channels, kernels, strides, paddings, latent_obs_dim
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vision.py", line 159, in _build_convtranspose_layers
+    nn.ConvTranspose2d(
+    ~~~~~~~~~~~~~~~~~~^
+        in_channels=channels[i],
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        out_padding=1
+        ^^^^^^^^^^^^^
+    )
+    ^
+TypeError: ConvTranspose2d.__init__() got an unexpected keyword argument 'out_padding'. Did you mean 'output_padding'?

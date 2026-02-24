@@ -139,7 +139,7 @@ def main():
     model_param_path = f"result/{cfg.wandb.train_name}/best_model.safetensors"
     model_param = load_file(model_param_path)
     
-    model = VAE(cfg).to(device)
+    model = VAE().to(device)
     model.load_state_dict(model_param)
     
     transform = ObsTransform()
