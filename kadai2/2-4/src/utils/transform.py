@@ -16,6 +16,7 @@ class ObsTransform:
     def __init__(self):
         self.obs_transform = transforms.Compose([
             transforms.ToTensor(),
+            # MNISTなので1次元に直す
             transforms.Normalize(mean=[0.5], std=[0.5])
         ])
 

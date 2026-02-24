@@ -127,6 +127,7 @@ class Decoder(nn.Module):
         
         self.in_channel = channels[0]
         # ハードコーディングされずに自動で計算されるべき
+        # encoderの最後の特徴マップのサイズ
         self.conved_image_size = 7 
         
         self.fc = _build_mlp(
@@ -165,6 +166,7 @@ class Decoder(nn.Module):
         if i < len(channels) - 1:
           layers.append(nn.ReLU())
         else:
-          layers.append(nn.Sigmoid())
+        #   今回の値が-1<x<1なのでhyperbolic tangentを用いる
+          layers.append(nn.Tanh())
         return nn.Sequential(*layers)
     

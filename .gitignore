@@ -13,3 +13,5 @@ wheels/
 output
 data
 result
+.log
+.wandb

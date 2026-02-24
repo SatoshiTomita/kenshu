@@ -1,1 +1,10 @@
- 16%|████████████▍                                                                 | 16/100 [05:48<30:39, 21.90s/it]
+ 60%|██████████████████████████████████████████████▊                               | 60/100 [22:07<14:44, 22.12s/it]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 60, in train_loop
+    input = input.to(device)
+KeyboardInterrupt
