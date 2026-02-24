@@ -1,6 +1,6 @@
 wandb:
   project_name: "daimon2"
-  train_name: "2-5_1"
+  train_name: "2-5_2"
   config:
     device: "cuda:0"
   

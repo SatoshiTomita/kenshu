@@ -1,1 +1,40 @@
-  5%|███                                                           | 5/100 [01:28<27:51, 17.60s/it]
+ 27%|███████████████▉                                           | 27/100 [26:54<1:12:44, 59.79s/it]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 68, in train_loop
+    optimizer.step()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/optimizer.py", line 526, in wrapper
+    out = func(*args, **kwargs)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/optimizer.py", line 81, in _use_grad
+    ret = func(*args, **kwargs)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/adam.py", line 248, in step
+    adam(
+    ~~~~^
+        params_with_grad,
+        ^^^^^^^^^^^^^^^^^
+    ...<19 lines>...
+        decoupled_weight_decay=group["decoupled_weight_decay"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/optimizer.py", line 151, in maybe_fallback
+    return func(*args, **kwargs)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/adam.py", line 970, in adam
+    func(
+    ~~~~^
+        params,
+        ^^^^^^^
+    ...<17 lines>...
+        decoupled_weight_decay=decoupled_weight_decay,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/optim/adam.py", line 547, in _single_tensor_adam
+    param.addcdiv_(exp_avg, denom, value=-step_size)  # type: ignore[arg-type]
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

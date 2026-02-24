@@ -17,3 +17,173 @@ config: {'device': 'cuda:0', '_wandb': {}}
 2026-02-24 20:29:23,874 INFO    MainThread:99274 [wandb_run.py:_redirect():2442] Wrapping output streams.
 2026-02-24 20:29:23,874 INFO    MainThread:99274 [wandb_run.py:_redirect():2465] Redirects installed.
 2026-02-24 20:29:23,876 INFO    MainThread:99274 [wandb_init.py:init():1082] run started, returning control to user process
+2026-02-24 20:56:18,217 INFO    wandb-AsyncioManager-main:99274 [service_client.py:_forward_responses():134] Reached EOF.
+2026-02-24 20:56:18,218 INFO    wandb-AsyncioManager-main:99274 [mailbox.py:close():155] Closing mailbox, abandoning 1 handles.
+2026-02-24 20:56:19,150 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,156 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,158 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,160 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,162 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,164 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,164 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,165 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,166 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
+2026-02-24 20:56:19,174 ERROR   wandb-AsyncioManager-main:99274 [asyncio_manager.py:fn_wrap_exceptions():184] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/asyncio_manager.py", line 182, in fn_wrap_exceptions
+    await fn()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 45, in publish
+    await self._send_server_request(request)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 78, in _send_server_request
+    raise self._broken_exc.with_traceback(self._broken_tb)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 87, in _send_server_request
+    await self._drain_writer()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/wandb/sdk/lib/service/service_client.py", line 96, in _drain_writer
+    await self._writer.drain()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 386, in drain
+    await self._protocol._drain_helper()
+  File "/Users/tomita/.local/share/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/asyncio/streams.py", line 166, in _drain_helper
+    raise ConnectionResetError('Connection lost')
+ConnectionResetError: Connection lost
