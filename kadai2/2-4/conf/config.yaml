@@ -1,6 +1,6 @@
 wandb:
   project_name: "daimon1"
-  train_name: "dummy"
+  train_name: "2-5_1"
   config:
     device: "cuda:0"
 
@@ -15,17 +15,33 @@ train_data:
   input_timestep: 10
   split_ratio: [0.7, 0.2, 0.1]
   batch_size: 50
-  epoch: 1000
+  epoch: 100
   
 model:
-  hidden_dim: 10
+  encoder:
+    channels: [16, 32]
+    kernels:  [4, 4]
+    strides:  [2, 2]
+    paddings: [1, 1]
+  decoder:
+    channels: [32, 16, 1]
+    kernels:  [4, 4]
+    strides:  [2, 2]
+    paddings: [1, 1]
+    latent_obs_dim: 2
+  latent_obs_dim: 2
+  mlp:
+   hidden_dim: 3
+   layers: 3
+
+
 
 optimizer:
   learning_rate: 1.0e-4
   weight_decay: 1.0e-6
 
 params:
-    channels: []
-    kernels: []
-    strides: []
-    paddings: []
+    channels: [1]
+    kernels: [3]
+    strides: [2]
+    paddings: [1]

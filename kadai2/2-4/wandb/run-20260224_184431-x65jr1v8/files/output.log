@@ -1,0 +1,11 @@
+  0%|                                                                                      | 0/1000 [00:20<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 37, in train_model
+    minibatch_val_loss = validation_loop(self.model, self.val_dataloader, self.loss_fn,self.device)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 107, in validation_loop
+    minibatch_val_loss += loss.item()
+                          ^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'item'

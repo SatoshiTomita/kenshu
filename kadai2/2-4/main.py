@@ -1,18 +1,15 @@
 from box import Box
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 import torch
-from torch import nn
 import yaml
 import wandb
-
-from src.dataset.dataset import myDataset
 from src.dataloader.dataloader import myDataloader
-from src.model.model import FNN
+import torchvision
+from src.utils.transform import ObsTransform,ELBO
+from src.dataloader.dataloader import myDataloader
+
 from src.trainer.trainer import Trainer
-from src.utils.predict import Predict
-    
+from src.model.vae import VAE
 with open('./conf/config.yaml', 'r') as yml:
     cfg = Box(yaml.safe_load(yml))
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -24,51 +21,36 @@ device=torch.device("mps" if torch.mps.is_available()else "cpu")
 
 wandb.init(project=cfg.wandb.project_name, config=cfg.wandb.config, name=cfg.wandb.train_name)
 
-min_value = cfg.gen_data.min
-max_value = cfg.gen_data.max * np.pi
-points_per_round = cfg.gen_data.points_per_round
-num_rounds = cfg.gen_data.num_rounds
-theta = np.linspace(min_value, max_value * num_rounds, points_per_round * num_rounds)
+obs_transform = ObsTransform()
+train_dataset = torchvision.datasets.MNIST(root='./data', train=True,
+                                        download=True, transform=obs_transform)
+val_dataset = torchvision.datasets.MNIST(root='./data', train=False,
+                                        download=True, transform=obs_transform)
 
-x = np.cos(theta)
-y = np.sin(theta*2)
 
-data = np.stack([x, y], axis=1)
+dataloader = myDataloader(cfg.train_data.batch_size)
+train_dataloader = dataloader.prepare_data(dataset=train_dataset, shuffle=True)
+val_dataloader = dataloader.prepare_data(dataset=val_dataset, shuffle=False)
 
-plt.plot(data[:, 0], data[:, 1])
+model=VAE().to(device)
 
-plt.savefig("./output/eight.png")
 
-input_step = cfg.train_data.input_timestep
+optimizer = torch.optim.Adam(
+    model.parameters(),
+    lr=cfg.optimizer.learning_rate,
+    weight_decay=cfg.optimizer.weight_decay
+)
 
-input_data = data[:-1, :]
-target_data = data[input_step:, :]
-
-mydataset = myDataset(input_data, target_data, input_step)
-
-mydataloader = myDataloader(mydataset, cfg.train_data.split_ratio, cfg.train_data.batch_size)
-train_loader, validation_loader, test_loader = mydataloader.prepare_data()
-
-model = FNN(input_dim=input_step*2, hidden_dim=cfg.model.hidden_dim, output_dim=2).to(device)
-loss_fn = nn.MSELoss()
-
-optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.optimizer.learning_rate, weight_decay=cfg.optimizer.weight_decay)
-# deviceを引数で渡す
-trainer = Trainer(model, train_loader, validation_loader, optimizer, loss_fn, cfg.train_data.epoch,"output",device)
+trainer = Trainer(
+    model=model,
+    train_dataloader=train_dataloader,
+    val_dataloader=val_dataloader,
+    optimizer=optimizer,
+    loss_fn=ELBO,
+    epoch=cfg.train_data.epoch,
+    save_path=f"result/{cfg.wandb.train_name}",
+    device=device
+)
 
 trainer.train_model()
 
-wandb.finish()
-
-# 修正1-9:deviceを追加する
-predict=Predict(cfg,model,device)
-
-# 修正1-9:deviceを追加する
-test_loss=predict.test_loss(test_loader,loss_fn,device)
-close_test=predict.predict()
-
-fig=plt.figure(figsize=(12,8))
-ax=fig.add_subplot(111)
-
-ax.plot(close_test[:,0],close_test[:,1])
-fig.savefig(f"result/{cfg.wandb.train_name}/cloes_test.pdf")

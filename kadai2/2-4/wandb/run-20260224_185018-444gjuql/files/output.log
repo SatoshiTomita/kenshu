@@ -1,0 +1,9 @@
+  0%|                                                                                       | 0/100 [00:21<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 48, in train_model
+    if loss_min > minibatch_val_loss:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>' not supported between instances of 'float' and 'dict'

@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "box/box.py", line 594, in box.box.Box.__getitem__
+    return super().__getitem__(item)
+KeyError: 'latent_obs_dim'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "box/box.py", line 633, in box.box.Box.__getattr__
+  File "box/box.py", line 621, in box.box.Box.__getitem__
+    raise BoxKeyError(str(err)) from _exception_cause(err)
+box.exceptions.BoxKeyError: "'latent_obs_dim'"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "box/box.py", line 635, in box.box.Box.__getattr__
+AttributeError: 'Box' object has no attribute 'latent_obs_dim'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 35, in <module>
+    model=VAE().to(device)
+          ~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vae.py", line 27, in __init__
+    cfg.model.decoder.latent_obs_dim,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "box/box.py", line 649, in box.box.Box.__getattr__
+box.exceptions.BoxKeyError: "'Box' object has no attribute 'latent_obs_dim'"

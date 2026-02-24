@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 36, in <module>
+    model=VAE().to(device)
+          ~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vae.py", line 10, in __init__
+    super().init()
+    ^^^^^^^^^^^^
+AttributeError: 'super' object has no attribute 'init'

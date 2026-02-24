@@ -1,0 +1,29 @@
+  0%|                                                                                      | 0/1000 [00:00<?, ?it/s]/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/loss.py:626: UserWarning: Using a target size (torch.Size([50])) that is different to the input size (torch.Size([50, 1, 28, 28])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+  0%|                                                                                      | 0/1000 [00:22<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 37, in train_model
+    minibatch_val_loss = validation_loop(self.model, self.val_dataloader, self.loss_fn,self.device)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 104, in validation_loop
+    validation_loss = loss_fn(prediction, target)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/utils/transform.py", line 28, in ELBO
+    img_loss = nn.MSELoss()(x_hat, target) * np.prod(target.shape[-3:])
+               ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/nn/modules/loss.py", line 626, in forward
+    return F.mse_loss(input, target, reduction=self.reduction)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/nn/functional.py", line 3930, in mse_loss
+    expanded_input, expanded_target = torch.broadcast_tensors(input, target)
+                                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/functional.py", line 77, in broadcast_tensors
+    return _VF.broadcast_tensors(tensors)  # type: ignore[attr-defined]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+RuntimeError: The size of tensor a (28) must match the size of tensor b (50) at non-singleton dimension 3

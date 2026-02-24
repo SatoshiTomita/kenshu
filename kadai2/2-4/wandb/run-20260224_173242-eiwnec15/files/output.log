@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "box/box.py", line 594, in box.box.Box.__getitem__
+    return super().__getitem__(item)
+KeyError: 'encoder'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "box/box.py", line 633, in box.box.Box.__getattr__
+  File "box/box.py", line 621, in box.box.Box.__getitem__
+    raise BoxKeyError(str(err)) from _exception_cause(err)
+box.exceptions.BoxKeyError: "'encoder'"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "box/box.py", line 635, in box.box.Box.__getattr__
+AttributeError: 'Box' object has no attribute 'encoder'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 36, in <module>
+    model=VAE().to(device)
+          ~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/model/vae.py", line 14, in __init__
+    cfg.model.encoder.channels,
+    ^^^^^^^^^^^^^^^^^
+  File "box/box.py", line 649, in box.box.Box.__getattr__
+box.exceptions.BoxKeyError: "'Box' object has no attribute 'encoder'"

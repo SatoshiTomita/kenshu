@@ -9,7 +9,7 @@ def get_conved_size(
     paddings=None, 
 ):
     conved_shape = obs_shape
-    for i in range(len(channels)):
+    for i in range(len(kernels)):
         conved_shape = conv_out_shape(
             conved_shape, paddings[i], kernels[i], strides[i]
         )
@@ -37,6 +37,8 @@ def _build_mlp(in_dim: int, out_dim: int, hidden_dim: int, n_layers: int):
             layers.append(nn.ReLU())
         layers.append(nn.Linear(hidden_dim, out_dim))
     return nn.Sequential(*layers)
+
+# Encoderクラス
 class Encoder(nn.Module):
     def __init__(
         self,
@@ -96,6 +98,7 @@ class Encoder(nn.Module):
             layers.append(nn.ReLU())
         return nn.Sequential(*layers)
 
+# Decoderクラス
 class Decoder(nn.Module):
     def __init__(
         self,
@@ -123,7 +126,8 @@ class Decoder(nn.Module):
             )
         
         self.in_channel = channels[0]
-        self.conved_image_size = 7
+        # ハードコーディングされずに自動で計算されるべき
+        self.conved_image_size = 7 
         
         self.fc = _build_mlp(
             in_dim=latent_obs_dim,

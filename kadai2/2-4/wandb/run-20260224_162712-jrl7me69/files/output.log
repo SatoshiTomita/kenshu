@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 49, in <module>
+    mydataloader = myDataloader(mydataset, cfg.train_data.split_ratio, cfg.train_data.batch_size)
+TypeError: myDataloader.__init__() takes 2 positional arguments but 4 were given
