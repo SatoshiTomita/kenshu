@@ -1,0 +1,53 @@
+_wandb:
+    value:
+        cli_version: 0.25.0
+        e:
+            iiik92k020mwc8a4cn87b2ztgws4cknk:
+                apple:
+                    ecpuCores: 4
+                    gpuCores: 8
+                    memoryGb: 16
+                    name: Apple M1
+                    pcpuCores: 4
+                    ramTotalBytes: "17179869184"
+                    swapTotalBytes: "4294967296"
+                codePath: kadai2/2-4/main.py
+                codePathLocal: main.py
+                cpu_count: 8
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "1995218165760"
+                        used: "506591457280"
+                email: s.tomita2023@keio.jp
+                executable: /Users/tomita/lab/kenshu/.venv/bin/python3
+                git:
+                    commit: 20ce51eb849c46475e332842ac7eda2354408283
+                    remote: https://github.com/SatoshiTomita/kenshu.git
+                host: murata-labnoMacBook-Air.local
+                memory:
+                    total: "17179869184"
+                os: macOS-14.2.1-arm64-arm-64bit-Mach-O
+                program: /Users/tomita/lab/kenshu/kadai2/2-4/main.py
+                python: CPython 3.13.12
+                root: /Users/tomita/lab/kenshu/kadai2/2-4
+                startedAt: "2026-02-24T14:55:55.038618Z"
+                writerId: iiik92k020mwc8a4cn87b2ztgws4cknk
+        m: []
+        python_version: 3.13.12
+        t:
+            "1":
+                - 1
+                - 41
+            "2":
+                - 1
+                - 41
+            "3":
+                - 13
+                - 16
+            "4": 3.13.12
+            "5": 0.25.0
+            "12": 0.25.0
+            "13": darwin-arm64
+device:
+    value: cuda:0

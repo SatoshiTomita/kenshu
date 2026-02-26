@@ -1,0 +1,38 @@
+  0%|                                                                                       | 0/300 [00:11<?, ?it/s]
+Traceback (most recent call last):
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/main.py", line 55, in <module>
+    trainer.train_model()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 33, in train_model
+    minibatch_train_loss = train_loop(self.model, self.train_dataloader, self.optimizer, self.loss_fn,self.device)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/trainer/trainer.py", line 59, in train_loop
+    for  i, (input, _) in enumerate(train_dataloader):
+                          ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 741, in __next__
+    data = self._next_data()
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 801, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torch/utils/data/_utils/fetch.py", line 54, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torchvision/datasets/mnist.py", line 146, in __getitem__
+    img = self.transform(img)
+  File "/Users/tomita/lab/kenshu/kadai2/2-4/src/utils/transform.py", line 24, in __call__
+    return self.obs_transform(img)
+           ~~~~~~~~~~~~~~~~~~^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torchvision/transforms/transforms.py", line 95, in __call__
+    img = t(img)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torchvision/transforms/transforms.py", line 137, in __call__
+    return F.to_tensor(pic)
+           ~~~~~~~~~~~^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/torchvision/transforms/functional.py", line 168, in to_tensor
+    img = torch.from_numpy(np.array(pic, mode_to_nptype.get(pic.mode, np.uint8), copy=True))
+                           ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/PIL/Image.py", line 719, in __array_interface__
+    new["data"] = self.tobytes()
+                  ~~~~~~~~~~~~^^
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/PIL/Image.py", line 786, in tobytes
+    e = _getencoder(self.mode, encoder_name, encoder_args)
+  File "/Users/tomita/lab/kenshu/.venv/lib/python3.13/site-packages/PIL/Image.py", line 446, in _getencoder
+    encoder = getattr(core, f"{encoder_name}_encoder")
+KeyboardInterrupt

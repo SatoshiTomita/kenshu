@@ -165,8 +165,8 @@ class Decoder(nn.Module):
                     output_padding=1
                 )
             )
-        if i < len(channels) - 1:
-          layers.append(nn.Tanh())
+        if i < len(channels) - 2:
+          layers.append(nn.ReLU())
         else:
         #   今回の値が-1<x<1なのでhyperbolic tangentを用いる
           layers.append(nn.Tanh())

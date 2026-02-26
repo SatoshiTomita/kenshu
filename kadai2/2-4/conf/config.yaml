@@ -1,12 +1,12 @@
 wandb:
   project_name: "daimon2"
-  train_name: "2-5_2"
+  train_name: "2-5_epoc300"
   config:
     device: "cuda:0"
   
 train_data:
   batch_size: 50
-  epoch: 100
+  epoch: 300
   
 model:
   encoder:

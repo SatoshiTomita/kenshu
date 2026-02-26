@@ -1,0 +1,20 @@
+{"time":"2026-02-26T01:35:46.691071+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-02-26T01:35:47.019719+09:00","level":"INFO","msg":"stream: created new stream","id":"sgnbbgdm"}
+{"time":"2026-02-26T01:35:47.019803+09:00","level":"INFO","msg":"handler: started","stream_id":"sgnbbgdm"}
+{"time":"2026-02-26T01:35:47.019981+09:00","level":"INFO","msg":"stream: started","id":"sgnbbgdm"}
+{"time":"2026-02-26T01:35:47.019996+09:00","level":"INFO","msg":"sender: started","stream_id":"sgnbbgdm"}
+{"time":"2026-02-26T01:35:47.019999+09:00","level":"INFO","msg":"writer: started","stream_id":"sgnbbgdm"}
+{"time":"2026-02-26T02:23:42.416016+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": read tcp 192.168.3.112:62091->35.186.228.49:443: read: can't assign requested address"}
+{"time":"2026-02-26T02:23:44.748651+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:23:49.414328+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:23:59.306641+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:24:17.504855+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:24:49.846705+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:25:49.849369+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:26:49.852169+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T02:27:49.854825+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/daimon2/sgnbbgdm/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}
+{"time":"2026-02-26T03:01:43.985386+09:00","level":"INFO","msg":"stream: closing","id":"sgnbbgdm"}
+{"time":"2026-02-26T03:01:44.997704+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-02-26T03:01:45.520039+09:00","level":"INFO","msg":"handler: closed","stream_id":"sgnbbgdm"}
+{"time":"2026-02-26T03:01:45.521818+09:00","level":"INFO","msg":"sender: closed","stream_id":"sgnbbgdm"}
+{"time":"2026-02-26T03:01:45.521894+09:00","level":"INFO","msg":"stream: closed","id":"sgnbbgdm"}
