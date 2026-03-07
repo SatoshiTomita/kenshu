@@ -18,7 +18,7 @@ dataset:
   test_dir: test
   left_dirname: left
   right_dirname: right
-  variant: both  # right_only | both
+  variant: both  # right_only | both 入力データの切り替えに対応
   image_key: image
   state_key: state
   action_key: action
