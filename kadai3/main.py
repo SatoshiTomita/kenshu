@@ -17,7 +17,8 @@ from src.data.episode_dataset import (
     load_episode,
 )
 from src.eval.evaluator import run_offline_replay, run_online_test
-from src.model.vision_policy import PolicyRNN, VisionCNN, VisionPolicyModel
+from src.model.policy import PolicyRNN, VisionPolicyModel
+from src.model.vision import VisionCNN
 from src.train.trainer import Trainer
 from src.utils.io import load_normalizers, resolve_device, save_cfg, save_normalizers, set_seed
 
