@@ -11,10 +11,11 @@ import wandb
 
 from src.data.episode_dataset import (
     WindowDataset,
-    collect_episode_files,
-    collect_test_episode_files,
     compute_normalizer,
-    load_episode,
+    get_test_roots,
+    get_train_roots,
+    load_episodes_from_roots,
+    summarize_episode_data,
 )
 from src.eval.evaluator import run_offline_replay, run_online_test
 from src.model.policy import PolicyRNN, VisionPolicyModel
@@ -25,27 +26,33 @@ from src.utils.io import load_normalizers, resolve_device, save_cfg, save_normal
 
 def _load_episodes(cfg: DictConfig):
     data_root = Path(cfg.dataset.root)
-
-    train_files = collect_episode_files(
+    train_roots = get_train_roots(
         data_root=data_root,
         train_dir=cfg.dataset.train_dir,
         left_dirname=cfg.dataset.left_dirname,
         right_dirname=cfg.dataset.right_dirname,
         variant=cfg.dataset.variant,
     )
-    if len(train_files) == 0:
+    train_episodes = load_episodes_from_roots(
+        roots=train_roots,
+        image_key=cfg.dataset.image_key,
+        state_key=cfg.dataset.state_key,
+        action_key=cfg.dataset.action_key,
+        action_states_filename=cfg.dataset.action_states_filename,
+        image_states_filename=cfg.dataset.image_states_filename,
+        joint_states_filename=cfg.dataset.joint_states_filename,
+    )
+    if len(train_episodes) == 0:
         raise RuntimeError("No train episodes found. Check dataset.root/train and left/right folders.")
-
-    train_episodes = [
-        load_episode(p, cfg.dataset.image_key, cfg.dataset.state_key, cfg.dataset.action_key)
-        for p in train_files
-    ]
-
-    test_files = collect_test_episode_files(data_root=data_root, test_dir=cfg.dataset.test_dir)
-    test_episodes = [
-        load_episode(p, cfg.dataset.image_key, cfg.dataset.state_key, cfg.dataset.action_key)
-        for p in test_files
-    ]
+    test_episodes = load_episodes_from_roots(
+        roots=get_test_roots(data_root=data_root, test_dir=cfg.dataset.test_dir),
+        image_key=cfg.dataset.image_key,
+        state_key=cfg.dataset.state_key,
+        action_key=cfg.dataset.action_key,
+        action_states_filename=cfg.dataset.action_states_filename,
+        image_states_filename=cfg.dataset.image_states_filename,
+        joint_states_filename=cfg.dataset.joint_states_filename,
+    )
 
     return train_episodes, test_episodes
 
@@ -80,11 +87,11 @@ def main(cfg: DictConfig):
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     if cfg.mode == "offline_test":
-        norm_path = result_dir / "normalizer.json"
+        norm_path = result_dir / "normalizer.yaml"
         state_norm, action_norm = load_normalizers(norm_path)
 
-        state_dim = len(state_norm.mean)
-        action_dim = len(action_norm.mean)
+        state_dim = len(state_norm.min)
+        action_dim = len(action_norm.min)
         model = _build_model(cfg, state_dim=state_dim, action_dim=action_dim).to(device)
 
         model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else result_dir / "best_model.pt"
@@ -104,6 +111,9 @@ def main(cfg: DictConfig):
         return
 
     train_episodes, explicit_test_episodes = _load_episodes(cfg)
+    print({"train_data_summary": summarize_episode_data(train_episodes)})
+    if len(explicit_test_episodes) > 0:
+        print({"test_data_summary": summarize_episode_data(explicit_test_episodes)})
 
     tr_eps, val_eps = train_test_split(
         train_episodes,
@@ -181,7 +191,7 @@ def main(cfg: DictConfig):
     )
 
     save_cfg(cfg, result_dir / "config.yaml")
-    save_normalizers(state_norm, action_norm, result_dir / "normalizer.json")
+    save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
 
     if cfg.wandb.enable:
         wandb.log({"final_online_mse": online_metrics["online_mse"]})

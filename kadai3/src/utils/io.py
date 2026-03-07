@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 
 import numpy as np
 import torch
 from omegaconf import OmegaConf
+import yaml
 
 from src.data.episode_dataset import Normalizer
 
@@ -37,10 +37,10 @@ def save_cfg(cfg, path: Path):
 def save_normalizers(state_norm: Normalizer, action_norm: Normalizer, path: Path):
     payload = {"state": state_norm.to_dict(), "action": action_norm.to_dict()}
     with path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=True, indent=2)
+        yaml.safe_dump(payload, f, allow_unicode=False, sort_keys=False)
 
 
 def load_normalizers(path: Path) -> tuple[Normalizer, Normalizer]:
     with path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+        data = yaml.safe_load(f)
     return Normalizer.from_dict(data["state"]), Normalizer.from_dict(data["action"])

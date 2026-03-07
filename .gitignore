@@ -15,3 +15,5 @@ data
 result
 .log
 .wandb
+!kadai3/src/data/
+!kadai3/src/data/**
