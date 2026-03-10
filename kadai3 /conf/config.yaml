@@ -1,0 +1,94 @@
+mode: train  # train | offline_test
+train_name: cnn_rnn_baseline
+seed: 42
+result_root: result
+
+device: auto  # auto | cpu | cuda | mps
+
+wandb:
+  enable: false
+  project: kadai3
+  run_name: ${train_name}
+  config:
+    note: cnn+rnn baseline
+
+dataset:
+  root: data
+  train_dir: train
+  test_dir: test
+  left_dirname: left
+  right_dirname: right
+  variant: both  # right_only | both 入力データの切り替えに対応
+  # concatenated blosc2 filenames
+  action_states_filename: action_states.blosc2
+  image_states_filename: image_states.blosc2
+  joint_states_filename: joint_states.blosc2
+  # fallback keys for npz/pt/pth (1 file = 1 episode)
+  image_key: image
+  state_key: state
+  action_key: action
+  seq_len: 8
+  val_ratio: 0.2
+  test_ratio: 0.2
+  batch_size: 8
+  num_workers: 0
+  pin_memory: false
+
+# vision networkの各種設定
+vision:
+  in_channels: 3
+  conv_channels: [16, 32, 64]
+  kernels: [5, 3, 3]
+  strides: [2, 2, 2]
+  paddings: [2, 1, 1]
+  feature_dim: 128
+
+# policy networkの各種設定
+policy:
+  rnn_type: rnn  # rnn | gru
+  hidden_dim: 128
+  num_layers: 1
+
+# trainerの各種設定
+trainer:
+  epochs: 40
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-6
+  grad_clip_norm: 1.0
+
+replay:
+  enable: false
+  use_after_train: false
+  model_path: ""  # empty means result/<train_name>/best_model.pt
+  steps: 150
+  fps: 10
+  ema: 0.0
+  split: 100
+  send_action: false
+  image_key: image.main
+  state_key: observation.state
+  max_depth: null
+  init_from_current_state: true
+  # Replay init params
+  height: 480
+  width: 640
+  serial_numbers: []
+  camera_id: [0]
+  scale: 1.0
+  auto_exposure: false
+  auto_white_balance: false
+  exposure: 190.0
+  white_balance: 3300.0
+  min_depth: 0.0
+  max_depth_realsense: 1500.0
+  is_higher_port: false
+  leader_port: /dev/ttyACM1
+  follower_port: /dev/ttyACM0
+  calibration_name: koch
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job:
+    chdir: false
