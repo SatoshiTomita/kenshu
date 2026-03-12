@@ -1,4 +1,4 @@
-mode: train  # train | offline_test
+mode: offline_test  # train | offline_test
 train_name: cnn_rnn_baseline
 seed: 42
 result_root: result
@@ -6,7 +6,7 @@ result_root: result
 device: auto  # auto | cpu | cuda | mps
 
 wandb:
-  enable: false
+  enable: true
   project: kadai3
   run_name: ${train_name}
   config:
@@ -57,14 +57,15 @@ trainer:
   grad_clip_norm: 1.0
 
 replay:
-  enable: false
-  use_after_train: false
+  # replayを起動するかどうか
+  enable: true
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 150
   fps: 10
   ema: 0.0
   split: 100
-  send_action: false
+  # テスト結果を実機に送るかどうか
+  send_action: true  
   image_key: image.main
   state_key: observation.state
   max_depth: null
