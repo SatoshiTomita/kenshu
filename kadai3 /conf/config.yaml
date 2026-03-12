@@ -61,7 +61,7 @@ replay:
   enable: true
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 150
-  fps: 10
+  fps: 5
   ema: 0.0
   split: 100
   # テスト結果を実機に送るかどうか
@@ -83,8 +83,8 @@ replay:
   min_depth: 0.0
   max_depth_realsense: 1500.0
   is_higher_port: false
-  leader_port: /dev/ttyACM1
-  follower_port: /dev/ttyACM0
+  leader_port: /dev/tty.usbmodem58370530001
+  follower_port: /dev/tty.usbmodem58370529971
   calibration_name: koch
 
 hydra:
