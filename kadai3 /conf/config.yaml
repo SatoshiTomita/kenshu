@@ -71,7 +71,7 @@ replay:
   max_depth: null
   init_from_current_state: true
   # Replay init params
-  height: 480
+  height: 360
   width: 640
   serial_numbers: []
   camera_id: [0]
