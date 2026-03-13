@@ -5,25 +5,23 @@ import sys
 
 import hydra
 import numpy as np
-from omegaconf import OmegaConf
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-import yaml
 
 try:
     import wandb
 except Exception:  # pragma: no cover
     wandb = None
 
+_ROOT = Path(__file__).resolve().parent
+sys.path.append(str(_ROOT / "src"))
+
 from conf import MainConfig
 from src.data.episode_dataset import (
     Normalizer,
     WindowDataset,
     compute_normalizer,
-    get_test_roots,
-    get_train_roots,
-    load_episodes_from_roots,
     summarize_episode_data,
 )
 from src.dataloader.dataloader import myDataloader
@@ -31,93 +29,18 @@ from src.models.policy import PolicyNetwork
 from src.models.vision import VisionNetwork
 from src.models.vision_policy import VisionPolicyModel
 from src.trainer.trainer import Trainer
+from src.utils.train_utils import (
+    load_episodes,
+    load_normalizers,
+    resolve_device,
+    save_cfg,
+    save_normalizers,
+    set_seed,
+    split_indices,
+)
 
 
-def _set_seed(seed: int) -> None:
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-
-def _resolve_device(device_cfg: str) -> torch.device:
-    d = device_cfg.lower()
-    if d == "cpu":
-        return torch.device("cpu")
-    if d == "cuda":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if d == "mps":
-        return torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    # auto
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
-
-
-def _save_cfg(cfg: MainConfig, path: Path) -> None:
-    data = OmegaConf.to_container(cfg, resolve=True)
-    with path.open("w") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=False)
-
-
-def _save_normalizers(state_norm: Normalizer, action_norm: Normalizer, path: Path) -> None:
-    payload = {"state": state_norm.to_dict(), "action": action_norm.to_dict()}
-    with path.open("w") as f:
-        yaml.safe_dump(payload, f, sort_keys=False, allow_unicode=False)
-
-
-def _load_normalizers(path: Path) -> tuple[Normalizer, Normalizer]:
-    data = yaml.safe_load(path.read_text())
-    return Normalizer.from_dict(data["state"]), Normalizer.from_dict(data["action"])
-
-
-def _load_episodes(cfg: MainConfig):
-    data_root = Path(cfg.dataset.root)
-    train_roots = get_train_roots(
-        data_root=data_root,
-        train_dir=cfg.dataset.train_dir,
-        left_dirname=cfg.dataset.left_dirname,
-        right_dirname=cfg.dataset.right_dirname,
-        variant=cfg.dataset.variant,
-    )
-    train_episodes = load_episodes_from_roots(
-        roots=train_roots,
-        image_key=cfg.dataset.image_key,
-        state_key=cfg.dataset.state_key,
-        action_key=cfg.dataset.action_key,
-        action_states_filename=cfg.dataset.action_states_filename,
-        image_states_filename=cfg.dataset.image_states_filename,
-        joint_states_filename=cfg.dataset.joint_states_filename,
-    )
-    if len(train_episodes) == 0:
-        raise RuntimeError("No train episodes found. Check dataset.root/train and left/right folders.")
-    test_episodes = load_episodes_from_roots(
-        roots=get_test_roots(data_root=data_root, test_dir=cfg.dataset.test_dir),
-        image_key=cfg.dataset.image_key,
-        state_key=cfg.dataset.state_key,
-        action_key=cfg.dataset.action_key,
-        action_states_filename=cfg.dataset.action_states_filename,
-        image_states_filename=cfg.dataset.image_states_filename,
-        joint_states_filename=cfg.dataset.joint_states_filename,
-    )
-    return train_episodes, test_episodes
-
-
-def _split_indices(n: int, val_ratio: float, test_ratio: float, seed: int):
-    rng = np.random.default_rng(seed)
-    idx = np.arange(n)
-    rng.shuffle(idx)
-    n_val = int(round(n * val_ratio))
-    n_test = int(round(n * test_ratio))
-    n_train = max(n - n_val - n_test, 1)
-    train_idx = idx[:n_train]
-    val_idx = idx[n_train : n_train + n_val]
-    test_idx = idx[n_train + n_val : n_train + n_val + n_test]
-    return train_idx, val_idx, test_idx
-
-
+# Vision + Policy を組み合わせたモデルを作成
 def _build_model(cfg: MainConfig, state_dim: int, action_dim: int) -> nn.Module:
     vision = VisionNetwork(
         in_channels=cfg.vision.in_channels,
@@ -137,6 +60,7 @@ def _build_model(cfg: MainConfig, state_dim: int, action_dim: int) -> nn.Module:
     return VisionPolicyModel(vision=vision, policy=policy)
 
 
+# テストデータで推論してMSEと可視化を保存
 def _online_test(
     model: nn.Module,
     loader: DataLoader,
@@ -186,10 +110,11 @@ def _online_test(
     return {"online_mse": mse, "num_samples": int(len(pred_all))}
 
 
+# 学習/評価のエントリポイント
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: MainConfig):
-    _set_seed(int(cfg.seed))
-    device = _resolve_device(cfg.device)
+    set_seed(int(cfg.seed))
+    device = resolve_device(cfg.device)
 
     result_dir = Path(cfg.result_root) / cfg.train_name
     fig_dir = result_dir / "fig"
@@ -198,7 +123,7 @@ def main(cfg: MainConfig):
 
     if cfg.mode == "offline_test":
         norm_path = result_dir / "normalizer.yaml"
-        state_norm, action_norm = _load_normalizers(norm_path)
+        state_norm, action_norm = load_normalizers(norm_path)
         state_dim = len(state_norm.min)
         action_dim = len(action_norm.min)
         model = _build_model(cfg, state_dim=state_dim, action_dim=action_dim).to(device)
@@ -269,21 +194,21 @@ def main(cfg: MainConfig):
         print({"mode": "offline_test", "device": str(device)})
         return
 
-    train_episodes, explicit_test_episodes = _load_episodes(cfg)
+    train_episodes, explicit_test_episodes = load_episodes(cfg)
     # 学習に使うエピソードの概要を表示（件数・次元などの確認用）
     print({"train_data_summary": summarize_episode_data(train_episodes)})
     if len(explicit_test_episodes) > 0:
         print({"test_data_summary": summarize_episode_data(explicit_test_episodes)})
 
     if len(explicit_test_episodes) > 0:
-        train_idx, val_idx, _ = _split_indices(
+        train_idx, val_idx, _ = split_indices(
             len(train_episodes), float(cfg.dataset.val_ratio), 0.0, int(cfg.seed)
         )
         tr_eps = [train_episodes[i] for i in train_idx]
         val_eps = [train_episodes[i] for i in val_idx] if len(val_idx) > 0 else tr_eps
         test_eps = explicit_test_episodes
     else:
-        train_idx, val_idx, test_idx = _split_indices(
+        train_idx, val_idx, test_idx = split_indices(
             len(train_episodes),
             float(cfg.dataset.val_ratio),
             float(cfg.dataset.test_ratio),
@@ -363,8 +288,8 @@ def main(cfg: MainConfig):
     )
 
     # 再利用用に設定と正規化パラメータを保存
-    _save_cfg(cfg, result_dir / "config.yaml")
-    _save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
+    save_cfg(cfg, result_dir / "config.yaml")
+    save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
 
     if use_wandb:
         wandb.log({"final_online_mse": online_metrics["online_mse"]})
