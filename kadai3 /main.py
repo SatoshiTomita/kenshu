@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import hydra
 import numpy as np
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -14,6 +14,7 @@ try:
 except Exception:  # pragma: no cover
     wandb = None
 
+from src.conf import MainConfig
 from src.data.episode_dataset import (
     Normalizer,
     WindowDataset,
@@ -23,8 +24,11 @@ from src.data.episode_dataset import (
     load_episodes_from_roots,
     summarize_episode_data,
 )
+from src.dataloader.dataloader import myDataloader
 from src.models.policy import PolicyNetwork
 from src.models.vision import VisionNetwork
+from src.models.vision_policy import VisionPolicyModel
+from src.trainer.trainer import Trainer
 
 
 def _set_seed(seed: int) -> None:
@@ -50,7 +54,7 @@ def _resolve_device(device_cfg: str) -> torch.device:
     return torch.device("cpu")
 
 
-def _save_cfg(cfg: DictConfig, path: Path) -> None:
+def _save_cfg(cfg: MainConfig, path: Path) -> None:
     data = OmegaConf.to_container(cfg, resolve=True)
     with path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=False)
@@ -67,7 +71,7 @@ def _load_normalizers(path: Path) -> tuple[Normalizer, Normalizer]:
     return Normalizer.from_dict(data["state"]), Normalizer.from_dict(data["action"])
 
 
-def _load_episodes(cfg: DictConfig):
+def _load_episodes(cfg: MainConfig):
     data_root = Path(cfg.dataset.root)
     train_roots = get_train_roots(
         data_root=data_root,
@@ -112,18 +116,7 @@ def _split_indices(n: int, val_ratio: float, test_ratio: float, seed: int):
     return train_idx, val_idx, test_idx
 
 
-class VisionPolicyModel(nn.Module):
-    def __init__(self, vision: VisionNetwork, policy: PolicyNetwork):
-        super().__init__()
-        self.vision = vision
-        self.policy = policy
-
-    def forward(self, image: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
-        feature = self.vision(image)
-        return self.policy(feature, state)
-
-
-def _build_model(cfg: DictConfig, state_dim: int, action_dim: int) -> nn.Module:
+def _build_model(cfg: MainConfig, state_dim: int, action_dim: int) -> nn.Module:
     vision = VisionNetwork(
         in_channels=cfg.vision.in_channels,
         conv_channels=list(cfg.vision.conv_channels),
@@ -140,32 +133,6 @@ def _build_model(cfg: DictConfig, state_dim: int, action_dim: int) -> nn.Module:
         rnn_type=cfg.policy.rnn_type,
     )
     return VisionPolicyModel(vision=vision, policy=policy)
-
-
-def _run_epoch(
-    model: nn.Module,
-    loader: DataLoader,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer | None,
-) -> float:
-    is_train = optimizer is not None
-    model.train(is_train)
-    loss_fn = nn.MSELoss()
-    total = 0.0
-    count = 0
-    for image, state, action in loader:
-        image = image.to(device)
-        state = state.to(device)
-        action = action.to(device)
-        pred = model(image, state)
-        loss = loss_fn(pred, action)
-        if is_train:
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        total += float(loss.item())
-        count += 1
-    return total / max(count, 1)
 
 
 def _online_test(
@@ -218,7 +185,7 @@ def _online_test(
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg: DictConfig):
+def main(cfg: MainConfig):
     _set_seed(int(cfg.seed))
     device = _resolve_device(cfg.device)
 
@@ -301,6 +268,7 @@ def main(cfg: DictConfig):
         return
 
     train_episodes, explicit_test_episodes = _load_episodes(cfg)
+    # 学習に使うエピソードの概要を表示（件数・次元などの確認用）
     print({"train_data_summary": summarize_episode_data(train_episodes)})
     if len(explicit_test_episodes) > 0:
         print({"test_data_summary": summarize_episode_data(explicit_test_episodes)})
@@ -323,7 +291,9 @@ def main(cfg: DictConfig):
         val_eps = [train_episodes[i] for i in val_idx] if len(val_idx) > 0 else tr_eps
         test_eps = [train_episodes[i] for i in test_idx] if len(test_idx) > 0 else val_eps
 
+    # 学習用データだけから正規化パラメータを計算（テスト漏洩を防ぐ）
     state_norm, action_norm = compute_normalizer(tr_eps)
+    # 時系列をseq_lenの窓に切り出したDatasetを作成（__getitem__内で正規化）
     train_ds = WindowDataset(tr_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
     val_ds = WindowDataset(val_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
     test_ds = WindowDataset(test_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
@@ -331,15 +301,17 @@ def main(cfg: DictConfig):
     if min(len(train_ds), len(val_ds), len(test_ds)) == 0:
         raise RuntimeError("Dataset is too small for current seq_len/split settings.")
 
-    dl_kwargs = dict(
+    # ミニバッチ生成用のDataLoaderを用意
+    dataloader = myDataloader(
         batch_size=int(cfg.dataset.batch_size),
         num_workers=int(cfg.dataset.num_workers),
         pin_memory=bool(cfg.dataset.pin_memory),
     )
-    train_loader = DataLoader(train_ds, shuffle=True, **dl_kwargs)
-    val_loader = DataLoader(val_ds, shuffle=False, **dl_kwargs)
-    test_loader = DataLoader(test_ds, shuffle=False, **dl_kwargs)
+    train_loader = dataloader.prepare_data(train_ds, shuffle=True)
+    val_loader = dataloader.prepare_data(val_ds, shuffle=False)
+    test_loader = dataloader.prepare_data(test_ds, shuffle=False)
 
+    # サンプルからstate/action次元を推定してモデルを構築
     sample_image, sample_state, sample_action = train_ds[0]
     model = _build_model(
         cfg,
@@ -347,6 +319,7 @@ def main(cfg: DictConfig):
         action_dim=int(sample_action.shape[-1]),
     ).to(device)
 
+    # CNN+RNNの学習用オプティマイザ
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=float(cfg.trainer.learning_rate),
@@ -361,12 +334,15 @@ def main(cfg: DictConfig):
             config={"config": cfg.wandb.config, "train_name": cfg.train_name},
         )
 
+    # 学習と検証（val lossが最小のモデルを保存）
     best_val = float("inf")
     best_path = result_dir / "best_model.pt"
+    trainer = Trainer(model=model, optimizer=optimizer, device=device)
     history: list[dict[str, float]] = []
     for epoch in range(int(cfg.trainer.epochs)):
-        train_loss = _run_epoch(model, train_loader, device, optimizer)
-        val_loss = _run_epoch(model, val_loader, device, None)
+        epoch_logs = trainer.fit(train_loader, val_loader, epochs=1)[0]
+        train_loss = epoch_logs["train_loss"]
+        val_loss = epoch_logs["val_loss"]
         history.append({"train_loss": train_loss, "val_loss": val_loss})
         if val_loss < best_val:
             best_val = val_loss
@@ -374,7 +350,7 @@ def main(cfg: DictConfig):
         if use_wandb:
             wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss})
 
-    # reload best
+    # ベストモデルでテストデータを評価（図も保存）
     model.load_state_dict(torch.load(best_path, map_location=device))
     online_metrics = _online_test(
         model=model,
@@ -384,6 +360,7 @@ def main(cfg: DictConfig):
         fig_dir=fig_dir,
     )
 
+    # 再利用用に設定と正規化パラメータを保存
     _save_cfg(cfg, result_dir / "config.yaml")
     _save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
 
