@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
+
 import hydra
 import numpy as np
 from omegaconf import OmegaConf
@@ -14,7 +16,7 @@ try:
 except Exception:  # pragma: no cover
     wandb = None
 
-from src.conf import MainConfig
+from conf import MainConfig
 from src.data.episode_dataset import (
     Normalizer,
     WindowDataset,
