@@ -11,10 +11,12 @@ class Trainer:
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         device: torch.device,
+        use_state: bool = True,
     ):
         self.model = model
         self.optimizer = optimizer
         self.device = device
+        self.use_state = bool(use_state)
         self.loss_fn = nn.MSELoss()
 
     def _run_epoch(self, loader: DataLoader, train: bool) -> float:
@@ -26,6 +28,9 @@ class Trainer:
             image = image.to(self.device)
             state = state.to(self.device)
             action = action.to(self.device)
+            if not self.use_state:
+                # stateを使わず画像のみで学習する
+                state = torch.zeros_like(state)
             pred = self.model(image, state)
             loss = self.loss_fn(pred, action)
             if train:

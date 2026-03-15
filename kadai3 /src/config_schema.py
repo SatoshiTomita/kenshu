@@ -56,6 +56,7 @@ class TrainerConfig:
     learning_rate: float = 1.0e-3
     weight_decay: float = 1.0e-6
     grad_clip_norm: float = 1.0
+    use_state: bool = True
 
 
 @dataclass

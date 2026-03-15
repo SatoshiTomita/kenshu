@@ -67,6 +67,7 @@ def _online_test(
     device: torch.device,
     action_norm: Normalizer,
     fig_dir: Path,
+    use_state: bool,
 ) -> dict:
     import matplotlib.pyplot as plt
 
@@ -80,6 +81,8 @@ def _online_test(
         for image, state, action in loader:
             image = image.to(device)
             state = state.to(device)
+            if not use_state:
+                state = torch.zeros_like(state)
             action = action.to(device)
             pred = model(image, state)
 
@@ -268,7 +271,12 @@ def main(cfg: MainConfig):
     # 学習と検証（val lossが最小のモデルを保存）
     best_val = float("inf")
     best_path = result_dir / "best_model.pt"
-    trainer = Trainer(model=model, optimizer=optimizer, device=device)
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        device=device,
+        use_state=bool(cfg.trainer.use_state),
+    )
     history: list[dict[str, float]] = []
     for epoch in range(int(cfg.trainer.epochs)):
         epoch_logs = trainer.fit(train_loader, val_loader, epochs=1)[0]
@@ -289,6 +297,7 @@ def main(cfg: MainConfig):
         device=device,
         action_norm=action_norm,
         fig_dir=fig_dir,
+        use_state=bool(cfg.trainer.use_state),
     )
 
     # 再利用用に設定と正規化パラメータを保存
