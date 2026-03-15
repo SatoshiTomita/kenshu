@@ -1,5 +1,5 @@
 mode: train  # train | offline_test
-train_name: cnn_rnn_baseline(image_test)
+train_name: cnn_rnn_baseline(state_noise=0.1)
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: cnn+rnn baseline(image_test)
+    note: cnn+rnn baseline(state_noise=0.1)
 
 dataset:
   root: data
@@ -51,11 +51,12 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 1
+  epochs: 10
   learning_rate: 1.0e-3
   weight_decay: 1.0e-6
   grad_clip_norm: 1.0
-  use_state: false
+  use_state: true
+  state_noise_std: 0.05
 
 replay:
   # replayを起動するかどうか

@@ -12,11 +12,13 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         device: torch.device,
         use_state: bool = True,
+        state_noise_std: float = 0.0,
     ):
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.use_state = bool(use_state)
+        self.state_noise_std = float(state_noise_std)
         self.loss_fn = nn.MSELoss()
 
     def _run_epoch(self, loader: DataLoader, train: bool) -> float:
@@ -31,6 +33,10 @@ class Trainer:
             if not self.use_state:
                 # stateを使わず画像のみで学習する
                 state = torch.zeros_like(state)
+            elif self.state_noise_std > 0.0 and train:
+                # stateにノイズを加えてロバスト性を上げる
+                noise = torch.randn_like(state) * self.state_noise_std
+                state = state + noise
             pred = self.model(image, state)
             loss = self.loss_fn(pred, action)
             if train:

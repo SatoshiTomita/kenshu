@@ -276,6 +276,7 @@ def main(cfg: MainConfig):
         optimizer=optimizer,
         device=device,
         use_state=bool(cfg.trainer.use_state),
+        state_noise_std=float(cfg.trainer.state_noise_std),
     )
     history: list[dict[str, float]] = []
     for epoch in range(int(cfg.trainer.epochs)):

@@ -1,0 +1,12 @@
+{"time":"2026-03-15T15:21:15.78144+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-03-15T15:21:16.409248+09:00","level":"INFO","msg":"stream: created new stream","id":"ajpxqa04"}
+{"time":"2026-03-15T15:21:16.409666+09:00","level":"INFO","msg":"handler: started","stream_id":"ajpxqa04"}
+{"time":"2026-03-15T15:21:16.409774+09:00","level":"INFO","msg":"stream: started","id":"ajpxqa04"}
+{"time":"2026-03-15T15:21:16.409847+09:00","level":"INFO","msg":"writer: started","stream_id":"ajpxqa04"}
+{"time":"2026-03-15T15:21:16.409857+09:00","level":"INFO","msg":"sender: started","stream_id":"ajpxqa04"}
+{"time":"2026-03-15T15:23:44.581416+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-03-15T15:23:44.816656+09:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-03-15T15:23:44.83886+09:00","level":"INFO","msg":"stream: closing","id":"ajpxqa04"}
+{"time":"2026-03-15T15:23:44.839321+09:00","level":"INFO","msg":"handler: closed","stream_id":"ajpxqa04"}
+{"time":"2026-03-15T15:23:44.840034+09:00","level":"INFO","msg":"sender: closed","stream_id":"ajpxqa04"}
+{"time":"2026-03-15T15:23:44.840059+09:00","level":"INFO","msg":"stream: closed","id":"ajpxqa04"}

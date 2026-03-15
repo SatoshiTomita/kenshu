@@ -57,6 +57,7 @@ class TrainerConfig:
     weight_decay: float = 1.0e-6
     grad_clip_norm: float = 1.0
     use_state: bool = True
+    state_noise_std: float = 0.0
 
 
 @dataclass
