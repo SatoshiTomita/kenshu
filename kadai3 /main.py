@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover
 _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
-from conf import MainConfig
+from config_schema import MainConfig
 from src.data.episode_dataset import (
     Normalizer,
     WindowDataset,
@@ -157,7 +157,7 @@ def main(cfg: MainConfig):
             image_q: list[torch.Tensor] = []
             state_q: list[np.ndarray] = []
             model.eval()
-            for _ in range(int(cfg.replay.steps)):
+            for step in range(int(cfg.replay.steps)):
                 obs = replay.get_observations(max_depth=cfg.replay.max_depth)
                 image = obs[cfg.replay.image_key]
                 state = np.asarray(obs[cfg.replay.state_key], dtype=np.float32)
@@ -170,6 +170,8 @@ def main(cfg: MainConfig):
 
                 image_q.append(image_t)
                 state_q.append(state)
+                # デバッグ: キューのサイズを確認
+                print(f"Step: {step}, Queue size: {len(image_q)}")
                 if len(image_q) < int(cfg.dataset.seq_len):
                     continue
                 image_q = image_q[-int(cfg.dataset.seq_len) :]
@@ -182,6 +184,8 @@ def main(cfg: MainConfig):
 
                 with torch.no_grad():
                     action_normed = model(image_in, state_in)[0, -1].detach().cpu().numpy()
+                # デバッグ: 予測アクションを確認
+                print(f"Action predicted (normalized): {action_normed}")
                 action = action_norm.denormalize(action_normed)
                 action_t = torch.tensor(action, dtype=torch.float32)
                 if cfg.replay.send_action:

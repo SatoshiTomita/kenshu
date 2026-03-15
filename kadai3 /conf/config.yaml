@@ -1,5 +1,5 @@
-mode: offline_test  # train | offline_test
-train_name: cnn_rnn_baseline
+mode: train  # train | offline_test
+train_name: cnn_rnn_baseline(data_test)
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: cnn+rnn baseline
+    note: cnn+rnn baseline(data_test)
 
 dataset:
   root: data
@@ -51,7 +51,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 40
+  epochs: 5
   learning_rate: 1.0e-3
   weight_decay: 1.0e-6
   grad_clip_norm: 1.0

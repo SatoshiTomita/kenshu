@@ -1,0 +1,56 @@
+_wandb:
+    value:
+        cli_version: 0.25.0
+        e:
+            ni1aex1r4lb9r8f0nsi25xlkihbd18e9:
+                apple:
+                    ecpuCores: 4
+                    gpuCores: 8
+                    memoryGb: 16
+                    name: Apple M1
+                    pcpuCores: 4
+                    ramTotalBytes: "17179869184"
+                    swapTotalBytes: "7516192768"
+                codePath: kadai3 /main.py
+                codePathLocal: main.py
+                cpu_count: 8
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "1995218165760"
+                        used: "529943764992"
+                email: s.tomita2023@keio.jp
+                executable: /Users/tomita/lab/kenshu/.venv/bin/python3
+                git:
+                    commit: fecd257229faaffe2e357e18a2d9623662f69f5a
+                    remote: https://github.com/SatoshiTomita/kenshu.git
+                host: murata-labnoMacBook-Air.local
+                memory:
+                    total: "17179869184"
+                os: macOS-14.2.1-arm64-arm-64bit-Mach-O
+                program: /Users/tomita/lab/kenshu/kadai3 /main.py
+                python: CPython 3.13.12
+                root: '/Users/tomita/lab/kenshu/kadai3 '
+                startedAt: "2026-03-13T13:13:59.501299Z"
+                writerId: ni1aex1r4lb9r8f0nsi25xlkihbd18e9
+        m: []
+        python_version: 3.13.12
+        t:
+            "1":
+                - 1
+                - 50
+            "2":
+                - 1
+                - 50
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.13.12
+            "5": 0.25.0
+            "12": 0.25.0
+            "13": darwin-arm64
+config:
+    value: '{''note'': ''cnn+rnn baseline''}'
+train_name:
+    value: cnn_rnn_baseline

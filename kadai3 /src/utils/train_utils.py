@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 import torch
 import yaml
 
-from conf import MainConfig
+from config_schema import MainConfig
 from data.episode_dataset import Normalizer, get_test_roots, get_train_roots, load_episodes_from_roots
 
 
