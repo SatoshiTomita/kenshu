@@ -3,7 +3,7 @@ train_name: cnn_gru_baseline(epoch150,hiddendeim256)
 seed: 42
 result_root: result
 
-device: auto  # auto | cpu | cuda | mps
+device: cpu  # auto | cpu | cuda | mps
 
 wandb:
   enable: true
@@ -76,7 +76,7 @@ replay:
   image_key: image.main
   state_key: observation.state
   max_depth: null
-  init_from_current_state: true
+  init_from_current_state: false
   # Replay init params
   height: 360
   width: 640
