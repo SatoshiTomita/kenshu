@@ -147,10 +147,65 @@ def _online_test(
             r, c = divmod(idx, ncols)
             axes[r][c].axis("off")
         fig.tight_layout()
-        fig.savefig(fig_dir / "online_action_all.png", dpi=150, bbox_inches="tight")
+        fig.savefig(fig_dir / "offline_action_all.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
     return {"online_mse": mse, "num_samples": int(len(pred_all))}
+
+
+def _save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: Path) -> None:
+    import matplotlib.pyplot as plt
+
+    def _moving_avg(x: np.ndarray, win: int = 5) -> np.ndarray:
+        if x.size == 0:
+            return x
+        win = max(int(win), 1)
+        if win <= 1:
+            return x
+        pad = win // 2
+        x_pad = np.pad(x, ((pad, pad), (0, 0)), mode="edge")
+        kernel = np.ones(win, dtype=np.float32) / float(win)
+        out = np.zeros_like(x, dtype=np.float32)
+        for d in range(x.shape[1]):
+            out[:, d] = np.convolve(x_pad[:, d], kernel, mode="valid")
+        return out
+
+    if pred_all.size == 0:
+        return
+    pred_s = _moving_avg(pred_all, win=5)
+    gt_s = _moving_avg(gt_all, win=5) if gt_all is not None else None
+    n_dims = pred_s.shape[1]
+
+    # 次元ごとの図（平滑化済み）
+    for d in range(n_dims):
+        fig = plt.figure(figsize=(10, 4))
+        ax = fig.add_subplot(111)
+        ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+        if gt_s is not None:
+            ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        ax.set_title(f"Offline test action dim {d} (smoothed)")
+        ax.legend()
+        fig.savefig(fig_dir / f"offline_action_dim_{d}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+    # 全次元を1枚にまとめた図（平滑化済み）
+    ncols = 2
+    nrows = (n_dims + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 3 * nrows), squeeze=False)
+    for d in range(n_dims):
+        r, c = divmod(d, ncols)
+        ax = axes[r][c]
+        ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+        if gt_s is not None:
+            ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        ax.set_title(f"Action dim {d} (smoothed)")
+        ax.legend()
+    for idx in range(n_dims, nrows * ncols):
+        r, c = divmod(idx, ncols)
+        axes[r][c].axis("off")
+    fig.tight_layout()
+    fig.savefig(fig_dir / "online_action_all.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 
 # 学習/評価のエントリポイント
@@ -190,6 +245,7 @@ def main(cfg: MainConfig):
 
             image_q: list[torch.Tensor] = []
             state_q: list[np.ndarray] = []
+            pred_actions: list[np.ndarray] = []
             model.eval()
             for step in range(int(cfg.replay.steps)):
                 obs = replay.get_observations(max_depth=cfg.replay.max_depth)
@@ -229,6 +285,7 @@ def main(cfg: MainConfig):
                 print(f"Action predicted (normalized): {action_normed}")
                 action = action_norm.denormalize(action_normed)
                 action_t = torch.tensor(action, dtype=torch.float32)
+                pred_actions.append(action)
                 if cfg.replay.send_action:
                     replay.send(
                         action=action_t,
@@ -236,6 +293,12 @@ def main(cfg: MainConfig):
                         split=cfg.replay.split,
                         ema=cfg.replay.ema,
                     )
+            if pred_actions:
+                _save_action_figs(
+                    pred_all=np.asarray(pred_actions, dtype=np.float32),
+                    gt_all=None,
+                    fig_dir=fig_dir,
+                )
         print({"mode": "offline_test", "device": str(device)})
         return
 
