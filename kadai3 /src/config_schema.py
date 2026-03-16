@@ -80,6 +80,8 @@ class ReplayConfig:
     init_from_current_state: bool = True
     height: int = 480
     width: int = 640
+    resize_height: int | None = None
+    resize_width: int | None = None
     serial_numbers: list[str] = field(default_factory=list)
     camera_id: list[int] = field(default_factory=lambda: [0])
     scale: float = 1.0

@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from src.data.episode_dataset import Normalizer
@@ -59,7 +60,12 @@ def run_online_test(
     return {"online_mse": mse, "num_samples": int(len(pred_all))}
 
 
-def _to_tensor_image(image: object, device: torch.device) -> torch.Tensor:
+def _to_tensor_image(
+    image: object,
+    device: torch.device,
+    resize_height: int | None,
+    resize_width: int | None,
+) -> torch.Tensor:
     if torch.is_tensor(image):
         t = image.detach().clone().float()
     else:
@@ -69,6 +75,13 @@ def _to_tensor_image(image: object, device: torch.device) -> torch.Tensor:
         t = t.permute(2, 0, 1)
     if t.max() > 1.0:
         t = t / 255.0
+    if resize_height is not None and resize_width is not None:
+        t = F.interpolate(
+            t.unsqueeze(0),
+            size=(int(resize_height), int(resize_width)),
+            mode="bilinear",
+            align_corners=False,
+        ).squeeze(0)
     return t.to(device)
 
 
@@ -107,7 +120,12 @@ def run_offline_replay(
 
     for _ in range(cfg.replay.steps):
         obs = replay.get_observations(max_depth=cfg.replay.max_depth)
-        image = _to_tensor_image(obs[cfg.replay.image_key], device=device)
+        image = _to_tensor_image(
+            obs[cfg.replay.image_key],
+            device=device,
+            resize_height=cfg.replay.resize_height,
+            resize_width=cfg.replay.resize_width,
+        )
         state = np.asarray(obs[cfg.replay.state_key], dtype=np.float32)
 
         image_q.append(image)

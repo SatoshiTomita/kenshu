@@ -7,6 +7,7 @@ import hydra
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 try:
@@ -170,6 +171,13 @@ def main(cfg: MainConfig):
                     image_t = image_t.permute(2, 0, 1)
                 if image_t.max() > 1.0:
                     image_t = image_t / 255.0
+                if cfg.replay.resize_height is not None and cfg.replay.resize_width is not None:
+                    image_t = F.interpolate(
+                        image_t.unsqueeze(0),
+                        size=(int(cfg.replay.resize_height), int(cfg.replay.resize_width)),
+                        mode="bilinear",
+                        align_corners=False,
+                    ).squeeze(0)
 
                 image_q.append(image_t)
                 state_q.append(state)

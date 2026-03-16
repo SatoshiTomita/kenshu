@@ -80,6 +80,9 @@ replay:
   # Replay init params
   height: 360
   width: 640
+  # Inference-time resize (set to null to disable)
+  resize_height: 360
+  resize_width: 640
   serial_numbers: []
   camera_id: [0]
   scale: 1.0
