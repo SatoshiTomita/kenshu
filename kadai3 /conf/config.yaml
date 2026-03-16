@@ -1,4 +1,4 @@
-mode: offline_test  # train | offline_test
+mode: train  # train | offline_test
 train_name: cnn_gru_baseline(epoch150,hiddendeim256)
 seed: 42
 result_root: result
@@ -28,6 +28,8 @@ dataset:
   state_key: state
   action_key: action
   seq_len: 8
+  # window stride for slicing episodes (set = seq_len to disable sliding overlap)
+  window_stride: 8
   val_ratio: 0.2
   test_ratio: 0.2
   batch_size: 8

@@ -101,14 +101,53 @@ def _online_test(
     gt_all = np.concatenate(all_gt, axis=0) if all_gt else np.zeros((0, 1), dtype=np.float32)
     mse = float(np.mean(mse_values)) if mse_values else float("nan")
 
-    for d in range(min(pred_all.shape[1], gt_all.shape[1])):
+    def _moving_avg(x: np.ndarray, win: int = 5) -> np.ndarray:
+        # 簡易な移動平均（端は端値でパディング）
+        if x.size == 0:
+            return x
+        win = max(int(win), 1)
+        if win <= 1:
+            return x
+        pad = win // 2
+        x_pad = np.pad(x, ((pad, pad), (0, 0)), mode="edge")
+        kernel = np.ones(win, dtype=np.float32) / float(win)
+        out = np.zeros_like(x, dtype=np.float32)
+        for d in range(x.shape[1]):
+            out[:, d] = np.convolve(x_pad[:, d], kernel, mode="valid")
+        return out
+
+    pred_s = _moving_avg(pred_all, win=5)
+    gt_s = _moving_avg(gt_all, win=5)
+    n_dims = min(pred_s.shape[1], gt_s.shape[1])
+
+    # 次元ごとの図（平滑化済み）
+    for d in range(n_dims):
         fig = plt.figure(figsize=(10, 4))
         ax = fig.add_subplot(111)
-        ax.plot(gt_all[:, d], label="gt")
-        ax.plot(pred_all[:, d], label="pred")
-        ax.set_title(f"Online test action dim {d}")
+        ax.plot(gt_s[:, d], label="gt", linewidth=1.0)
+        ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+        ax.set_title(f"Online test action dim {d} (smoothed)")
         ax.legend()
         fig.savefig(fig_dir / f"online_action_dim_{d}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+    # 全次元を1枚にまとめた図（平滑化済み）
+    if n_dims > 0:
+        ncols = 2
+        nrows = (n_dims + ncols - 1) // ncols
+        fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 3 * nrows), squeeze=False)
+        for d in range(n_dims):
+            r, c = divmod(d, ncols)
+            ax = axes[r][c]
+            ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+            ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+            ax.set_title(f"Action dim {d} (smoothed)")
+            ax.legend()
+        for idx in range(n_dims, nrows * ncols):
+            r, c = divmod(idx, ncols)
+            axes[r][c].axis("off")
+        fig.tight_layout()
+        fig.savefig(fig_dir / "online_action_all.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
     return {"online_mse": mse, "num_samples": int(len(pred_all))}
@@ -232,13 +271,26 @@ def main(cfg: MainConfig):
         int(cfg.dataset.seq_len),
         state_norm,
         action_norm,
+        window_stride=int(cfg.dataset.window_stride),
         augment=bool(cfg.dataset.augment),
         aug_brightness=float(cfg.dataset.aug_brightness),
         aug_contrast=float(cfg.dataset.aug_contrast),
         aug_shift=int(cfg.dataset.aug_shift),
     )
-    val_ds = WindowDataset(val_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
-    test_ds = WindowDataset(test_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
+    val_ds = WindowDataset(
+        val_eps,
+        int(cfg.dataset.seq_len),
+        state_norm,
+        action_norm,
+        window_stride=int(cfg.dataset.window_stride),
+    )
+    test_ds = WindowDataset(
+        test_eps,
+        int(cfg.dataset.seq_len),
+        state_norm,
+        action_norm,
+        window_stride=int(cfg.dataset.window_stride),
+    )
 
     if min(len(train_ds), len(val_ds), len(test_ds)) == 0:
         raise RuntimeError("Dataset is too small for current seq_len/split settings.")
