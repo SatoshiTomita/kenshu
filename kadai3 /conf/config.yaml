@@ -68,8 +68,9 @@ replay:
   enable: true
   model_path: "result/cnn_gru_baseline(epoch150,hiddendeim256)/best_model.pt"  # empty means result/<train_name>/best_model.pt
   steps: 150
-  fps: 30
-  ema: 0.0
+  # send loop rate (camera fps is not set here)
+  fps: 5
+  ema: 0.7
   split: 100
   # テスト結果を実機に送るかどうか
   send_action: true  
@@ -77,12 +78,10 @@ replay:
   state_key: observation.state
   max_depth: null
   init_from_current_state: false
-  # Replay init params
   height: 360
   width: 640
-  # Inference-time resize (set to null to disable)
-  resize_height: 360
-  resize_width: 640
+  resize_height: 36
+  resize_width: 64
   serial_numbers: []
   camera_id: [0]
   scale: 1.0

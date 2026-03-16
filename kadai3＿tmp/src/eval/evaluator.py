@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
+import inspect
 
 from src.data.episode_dataset import Normalizer
 
@@ -85,6 +86,22 @@ def _to_tensor_image(
     return t.to(device)
 
 
+def _build_replay_kwargs(cfg, Replay) -> dict:
+    # Replay が受け取れる引数だけを渡す（バージョン差異に対応）
+    params = set(inspect.signature(Replay).parameters.keys())
+    # カメラ設定には触れない方針: 必須の解像度のみ渡す
+    kwargs = {
+        "height": cfg.replay.height,
+        "width": cfg.replay.width,
+        "camera_id": tuple(cfg.replay.camera_id),
+        "is_higher_port": cfg.replay.is_higher_port,
+        "leader_port": cfg.replay.leader_port,
+        "follower_port": cfg.replay.follower_port,
+        "calibration_name": cfg.replay.calibration_name,
+    }
+    return {k: v for k, v in kwargs.items() if k in params}
+
+
 def run_offline_replay(
     cfg,
     model: torch.nn.Module,
@@ -95,24 +112,7 @@ def run_offline_replay(
 ):
     from lerobot_utils import Replay
 
-    replay = Replay(
-        height=cfg.replay.height,
-        width=cfg.replay.width,
-        serial_numbers=tuple(cfg.replay.serial_numbers),
-        camera_id=tuple(cfg.replay.camera_id),
-        scale=cfg.replay.scale,
-        fps=cfg.replay.fps,
-        auto_exposure=cfg.replay.auto_exposure,
-        auto_white_balance=cfg.replay.auto_white_balance,
-        exposure=cfg.replay.exposure,
-        white_balance=cfg.replay.white_balance,
-        max_depth=cfg.replay.max_depth_realsense,
-        min_depth=cfg.replay.min_depth,
-        is_higher_port=cfg.replay.is_higher_port,
-        leader_port=cfg.replay.leader_port,
-        follower_port=cfg.replay.follower_port,
-        calibration_name=cfg.replay.calibration_name,
-    )
+    replay = Replay(**_build_replay_kwargs(cfg, Replay))
 
     model.eval()
     image_q: deque[torch.Tensor] = deque(maxlen=seq_len)
