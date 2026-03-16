@@ -31,6 +31,11 @@ class DatasetConfig:
     batch_size: int = 8
     num_workers: int = 0
     pin_memory: bool = False
+    # 画像データ拡張の設定
+    augment: bool = False
+    aug_brightness: float = 0.1
+    aug_contrast: float = 0.1
+    aug_shift: int = 4
 
 
 @dataclass

@@ -228,7 +228,16 @@ def main(cfg: MainConfig):
     # 学習用データだけから正規化パラメータを計算（テスト漏洩を防ぐ）
     state_norm, action_norm = compute_normalizer(tr_eps)
     # 時系列をseq_lenの窓に切り出したDatasetを作成（__getitem__内で正規化）
-    train_ds = WindowDataset(tr_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
+    train_ds = WindowDataset(
+        tr_eps,
+        int(cfg.dataset.seq_len),
+        state_norm,
+        action_norm,
+        augment=bool(cfg.dataset.augment),
+        aug_brightness=float(cfg.dataset.aug_brightness),
+        aug_contrast=float(cfg.dataset.aug_contrast),
+        aug_shift=int(cfg.dataset.aug_shift),
+    )
     val_ds = WindowDataset(val_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
     test_ds = WindowDataset(test_eps, int(cfg.dataset.seq_len), state_norm, action_norm)
 
