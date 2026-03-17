@@ -1,5 +1,5 @@
 mode: train  # train | online_test
-train_name: epoch10_light_model
+train_name: epoch2000_light_model_batch16
 seed: 42
 result_root: result
 
@@ -31,7 +31,7 @@ dataset:
   # train/val/testの分割比率
   val_ratio: 0.2
   test_ratio: 0.1
-  batch_size: 8
+  batch_size: 16
   num_workers: 0
   pin_memory: false
   # 画像データ拡張
@@ -57,7 +57,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 10
+  epochs: 2000
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
@@ -76,9 +76,9 @@ replay:
   state_key: observation.state
   max_depth: null
   init_from_current_state: false
-  height: 360
+  height: 480
   width: 640
-  resize_height: 36
+  resize_height: 48
   resize_width: 64
   serial_numbers: []
   camera_id: [0]
