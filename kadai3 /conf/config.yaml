@@ -1,5 +1,5 @@
 mode: train  # train | offline_test
-train_name: cnn_gru_baseline(epoch2000,hiddendeim256)
+train_name: cnn_gru_baseline(epoch2000,hiddendeim32)
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: cnn+rnn baseline(epoch2000,hiddendeim256)
+    note: cnn+rnn baseline(epoch2000,hiddendeim32)
 
 dataset:
   root: data
@@ -48,12 +48,12 @@ vision:
   kernels: [5, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
-  feature_dim: 256
+  feature_dim: 16
 
 # policy networkの各種設定
 policy:
   rnn_type: gru  # rnn | gru
-  hidden_dim: 256
+  hidden_dim: 32
   num_layers: 1
 
 # trainerの各種設定

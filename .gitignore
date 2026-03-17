@@ -17,3 +17,4 @@ result
 .wandb
 kadai3/src/data/
 kadai3/src/data/**
+kadai3/src/wandb/**
