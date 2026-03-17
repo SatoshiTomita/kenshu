@@ -61,7 +61,7 @@ def _build_model(cfg, state_dim: int, action_dim: int) -> nn.Module:
 
 
 # テストデータで推論してMSEと可視化を保存
-def _online_test(
+def _offline_test(
     model: nn.Module,
     loader: DataLoader,
     device: torch.device,
@@ -125,9 +125,9 @@ def _online_test(
         ax = fig.add_subplot(111)
         ax.plot(gt_s[:, d], label="gt", linewidth=1.0)
         ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
-        ax.set_title(f"Online test action dim {d} (smoothed)")
+        ax.set_title(f"Offline test action dim {d} (smoothed)")
         ax.legend()
-        fig.savefig(fig_dir / f"online_action_dim_{d}.png", dpi=150, bbox_inches="tight")
+        fig.savefig(fig_dir / f"offline_action_dim_{d}.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
     # 全次元を1枚にまとめた図（平滑化済み）
@@ -149,7 +149,7 @@ def _online_test(
         fig.savefig(fig_dir / "offline_action_all.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
-    return {"online_mse": mse, "num_samples": int(len(pred_all))}
+    return {"offline_mse": mse, "num_samples": int(len(pred_all))}
 
 
 def _save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: Path) -> None:
@@ -218,7 +218,7 @@ def main(cfg):
     result_dir.mkdir(parents=True, exist_ok=True)
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    if cfg.mode == "offline_test":
+    if cfg.mode == "online_test":
         norm_path = result_dir / "normalizer.yaml"
         state_norm, action_norm = load_normalizers(norm_path)
         state_dim = len(state_norm.min)
@@ -298,7 +298,7 @@ def main(cfg):
                     gt_all=None,
                     fig_dir=fig_dir,
                 )
-        print({"mode": "offline_test", "device": str(device)})
+        print({"mode": "online_test", "device": str(device)})
         return
 
     train_episodes, explicit_test_episodes = load_episodes(cfg)
@@ -414,7 +414,7 @@ def main(cfg):
 
     # ベストモデルでテストデータを評価（図も保存）
     model.load_state_dict(torch.load(best_path, map_location=device))
-    online_metrics = _online_test(
+    offline_metrics = _offline_test(
         model=model,
         loader=test_loader,
         device=device,
@@ -428,7 +428,7 @@ def main(cfg):
     save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
 
     if use_wandb:
-        wandb.log({"final_online_mse": online_metrics["online_mse"]})
+        wandb.log({"final_offline_mse": offline_metrics["offline_mse"]})
         wandb.finish()
 
     print(
@@ -439,7 +439,7 @@ def main(cfg):
             "val_samples": len(val_ds),
             "test_samples": len(test_ds),
             "best_model": str(best_path),
-            "online_mse": online_metrics["online_mse"],
+            "offline_mse": offline_metrics["offline_mse"],
             "epochs": len(history),
         }
     )

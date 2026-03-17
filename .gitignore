@@ -15,8 +15,9 @@ data
 result
 .log
 .wandb
-kadai3/wandb/
+kadai3/wandb/**
 wandb/
 kadai3/src/data/
 kadai3/src/data/**
 kadai3/src/wandb/**
+
