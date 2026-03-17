@@ -26,7 +26,6 @@ class DatasetConfig:
     state_key: str = "state"
     action_key: str = "action"
     seq_len: int = 8
-    window_stride: int = 1
     val_ratio: float = 0.2
     test_ratio: float = 0.2
     batch_size: int = 8
