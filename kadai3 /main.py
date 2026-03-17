@@ -182,9 +182,9 @@ def _save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: 
         ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
         if gt_s is not None:
             ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
-        ax.set_title(f"Offline test action dim {d} (smoothed)")
+        ax.set_title(f"Online test action dim {d} (smoothed)")
         ax.legend()
-        fig.savefig(fig_dir / f"offline_action_dim_{d}.png", dpi=150, bbox_inches="tight")
+        fig.savefig(fig_dir / f"online_action_dim_{d}.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
     # 全次元を1枚にまとめた図（平滑化済み）
@@ -201,7 +201,7 @@ def _save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: 
         ax.legend()
     for idx in range(n_dims, nrows * ncols):
         r, c = divmod(idx, ncols)
-        axes[r][c].axis("off")
+        axes[r][c].axis("on")
     fig.tight_layout()
     fig.savefig(fig_dir / "online_action_all.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
