@@ -137,7 +137,6 @@ def main(cfg):
         model=model,
         optimizer=optimizer,
         device=device,
-        use_state=bool(cfg.trainer.use_state),
         state_noise_std=float(cfg.trainer.state_noise_std),
     )
     for epoch in range(int(cfg.trainer.epochs)):
@@ -157,7 +156,6 @@ def main(cfg):
         device=device,
         action_norm=action_norm,
         fig_dir=fig_dir,
-        use_state=bool(cfg.trainer.use_state),
         prefix="offline",
     )
 
