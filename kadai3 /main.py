@@ -15,7 +15,7 @@ _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
 from src.utils.app_helpers import build_model, offline_test, run_replay
-from src.data.episode_dataset import EpisodeDataset, compute_normalizer, summarize_episode_data
+from src.data.episode_dataset import EpisodeDataset, compute_normalizer
 from src.dataloader.dataloader import myDataloader
 from src.trainer.trainer import Trainer
 from src.utils.train_utils import (
@@ -42,11 +42,13 @@ def main(cfg):
     set_seed(int(cfg.seed))
     device = resolve_device(cfg.device)
 
+    # 結果保存用のディレクトリを作成
     result_dir = Path(cfg.result_root) / cfg.train_name
     fig_dir = result_dir / "fig"
     result_dir.mkdir(parents=True, exist_ok=True)
     fig_dir.mkdir(parents=True, exist_ok=True)
 
+    # online_test(推論)を行う処理
     if cfg.mode == "online_test":
         state_norm, action_norm = load_normalizers(result_dir / "normalizer.yaml")
         model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else result_dir / "best_model.pt"
@@ -63,10 +65,8 @@ def main(cfg):
         return
 
     train_episodes, explicit_test_episodes = load_episodes(cfg)
-    print({"train_data_summary": summarize_episode_data(train_episodes)})
-    if len(explicit_test_episodes) > 0:
-        print({"test_data_summary": summarize_episode_data(explicit_test_episodes)})
 
+    # test用のエピソードが明示的に指定されている場合は、trainとvalを分割してtestは指定されたものを使用する。
     if len(explicit_test_episodes) > 0:
         train_idx, val_idx, _ = split_indices(
             len(train_episodes), float(cfg.dataset.val_ratio), 0.0, int(cfg.seed)
@@ -84,8 +84,11 @@ def main(cfg):
         tr_eps = [train_episodes[i] for i in train_idx]
         val_eps = [train_episodes[i] for i in val_idx] if len(val_idx) > 0 else tr_eps
         test_eps = [train_episodes[i] for i in test_idx] if len(test_idx) > 0 else val_eps
-
+    
+    # 正規化パラメータの作成
     state_norm, action_norm = compute_normalizer(tr_eps)
+
+    # データセットの作成（学習時は拡張も行う）
     train_ds = EpisodeDataset(
         tr_eps,
         state_norm,
@@ -98,12 +101,18 @@ def main(cfg):
     val_ds = EpisodeDataset(val_eps, state_norm, action_norm)
     test_ds = EpisodeDataset(test_eps, state_norm, action_norm)
 
+    # データがからではないか確認
     if min(len(train_ds), len(val_ds), len(test_ds)) == 0:
         raise RuntimeError("Dataset is too small for current split settings.")
+    
+    
+    # lengths = [int(ep["action"].shape[0]) for ep in (tr_eps + val_eps + test_eps)]
+    # if len(set(lengths)) > 1:
+    #     raise RuntimeError("Episode lengths are not fixed. Use batch_size=1 or add padding.")
 
-    batch_size = 1
+    # DatasetからDataloaderを作成＆学習・検証・テスト用に分割
     dataloader = myDataloader(
-        batch_size=batch_size,
+        batch_size=int(cfg.dataset.batch_size),
         num_workers=int(cfg.dataset.num_workers),
         pin_memory=bool(cfg.dataset.pin_memory),
     )
@@ -111,6 +120,7 @@ def main(cfg):
     val_loader = dataloader.prepare_data(val_ds, shuffle=False)
     test_loader = dataloader.prepare_data(test_ds, shuffle=False)
 
+    # モデルの作成
     model = build_model(
         cfg,
         state_dim=len(state_norm.min),
@@ -123,6 +133,7 @@ def main(cfg):
         weight_decay=float(cfg.trainer.weight_decay),
     )
 
+    # WandBの初期化
     use_wandb = bool(cfg.wandb.enable) and wandb is not None
     if use_wandb:
         wandb.init(
@@ -131,6 +142,7 @@ def main(cfg):
             config={"config": cfg.wandb.config, "train_name": cfg.train_name},
         )
 
+    # 学習ループ
     best_val = float("inf")
     best_path = result_dir / "best_model.pt"
     trainer = Trainer(
@@ -148,7 +160,6 @@ def main(cfg):
             torch.save(model.state_dict(), best_path)
         if use_wandb:
             wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss})
-
     model.load_state_dict(torch.load(best_path, map_location=device))
     offline_metrics = offline_test(
         model=model,

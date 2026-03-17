@@ -93,7 +93,6 @@ def offline_test(
     device: torch.device,
     action_norm: Normalizer,
     fig_dir: Path,
-    use_state: bool,
     prefix: str = "offline",
 ) -> dict:
     model.eval()
@@ -105,8 +104,6 @@ def offline_test(
         for image, state, action in loader:
             image = image.to(device)
             state = state.to(device)
-            if not use_state:
-                state = torch.zeros_like(state)
             action = action.to(device)
             pred = model(image, state)
 

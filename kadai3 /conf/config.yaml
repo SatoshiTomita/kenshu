@@ -1,5 +1,5 @@
 mode: train  # train | online_test
-train_name: epoch2000_light_model
+train_name: epoch10_light_model
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: epoch2000_light_model
+    note: epoch10_light_model
 
 dataset:
   root: data
@@ -43,7 +43,7 @@ dataset:
 # vision networkの各種設定
 vision:
   in_channels: 3
-  conv_channels: [32, 64, 128]
+  conv_channels: [16, 32, 64]
   kernels: [5, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
@@ -57,7 +57,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 2000
+  epochs: 10
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
