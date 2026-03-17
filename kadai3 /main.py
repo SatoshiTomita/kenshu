@@ -18,7 +18,6 @@ except Exception:  # pragma: no cover
 _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
-from config_schema import MainConfig
 from src.data.episode_dataset import (
     Normalizer,
     WindowDataset,
@@ -42,7 +41,7 @@ from src.utils.train_utils import (
 
 
 # Vision + Policy を組み合わせたモデルを作成
-def _build_model(cfg: MainConfig, state_dim: int, action_dim: int) -> nn.Module:
+def _build_model(cfg, state_dim: int, action_dim: int) -> nn.Module:
     vision = VisionNetwork(
         in_channels=cfg.vision.in_channels,
         conv_channels=list(cfg.vision.conv_channels),
@@ -210,7 +209,7 @@ def _save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: 
 
 # 学習/評価のエントリポイント
 @hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg: MainConfig):
+def main(cfg):
     set_seed(int(cfg.seed))
     device = resolve_device(cfg.device)
 
@@ -290,8 +289,8 @@ def main(cfg: MainConfig):
                     replay.send(
                         action=action_t,
                         fps=cfg.replay.fps,
-                        split=cfg.replay.split,
-                        ema=cfg.replay.ema,
+                        # split=cfg.replay.split,
+                        # ema=cfg.replay.ema,
                     )
             if pred_actions:
                 _save_action_figs(
