@@ -178,6 +178,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         # --- 4. 時系列データの蓄積（スライディングウィンドウ） ---
         image_q.append(image_t)
         state_q.append(state)
+        print(f"Queue size: {len(image_q)}")
         
         # 設定されたシーケンス長（seq_len）に達するまで推論をスキップ
         if len(image_q) < int(cfg.dataset.seq_len):
@@ -198,6 +199,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         # --- 5. モデルによる推論（意思決定） ---
         with torch.no_grad(): 
             action_normed = model(image_in, state_in)[0, -1].detach().cpu().numpy()
+        print(f"Action predicted (normalized): {action_normed}")
         
         # 正規化された数値を「実際のロボットの角度」に復元（逆正規化）
         action = action_norm.denormalize(action_normed)
