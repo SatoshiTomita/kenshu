@@ -132,13 +132,12 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     from lerobot_utils import Replay  # type: ignore
 
     replay = Replay(
-        height=cfg.replay.height,
-        width=cfg.replay.width,
-        camera_id=tuple(cfg.replay.camera_id),
-        is_higher_port=cfg.replay.is_higher_port,
-        leader_port=cfg.replay.leader_port,
-        follower_port=cfg.replay.follower_port,
-        calibration_name=cfg.replay.calibration_name,
+        height=480,
+        width=640,
+        camera_id=(0,),
+        is_higher_port=False,
+        leader_port="/dev/tty.usbmodem58370530001",
+        follower_port="/dev/tty.usbmodem58370529971",
     )
 
     image_q: list[torch.Tensor] = []
