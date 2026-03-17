@@ -1,5 +1,5 @@
-mode: online_test  # train | online_test
-train_name: epoch2000_light_model_batch16
+mode: train  # train | online_test
+train_name: epoch2000_light_model_batch8
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: epoch2000_light_model_batch16
+    note: epoch2000_light_model_batch8
 
 dataset:
   root: data
@@ -29,9 +29,9 @@ dataset:
   action_key: action
   seq_len: 40
   # train/val/testの分割比率
-  val_ratio: 0.2
-  test_ratio: 0.1
-  batch_size: 16
+  val_ratio: 0.20
+  test_ratio: 0.10
+  batch_size: 8
   num_workers: 0
   pin_memory: false
   # 画像データ拡張
@@ -43,8 +43,8 @@ dataset:
 # vision networkの各種設定
 vision:
   in_channels: 3
-  conv_channels: [16, 32, 64]
-  kernels: [5, 3, 3]
+  conv_channels: [8, 16, 32]
+  kernels: [3, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
   feature_dim: 16
@@ -66,7 +66,7 @@ trainer:
 replay:
   # replayを起動するかどうか
   enable: true
-  model_path: "result/epoch2000_light_model_batch16/best_model.pt"  # empty means result/<train_name>/best_model.pt
+  model_path: "result/epoch2000_light_model_batch8/best_model.pt"  # empty means result/<train_name>/best_model.pt
   steps: 150
   # send loop rate (camera fps is not set here)
   fps: 5

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 import numpy as np
 import torch
@@ -142,9 +143,9 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     # 過去のデータを溜めておくための「待ち行列（キュー）」を用意
     def _compute_init_pose() -> np.ndarray | None:
-        # data の t=0 平均姿勢を使う
+        # data の t=0 平均アクションを使う（アクション空間に合わせる）
         train_eps, test_eps = load_episodes(cfg)
-        poses = [ep["state"][0] for ep in (train_eps + test_eps) if len(ep["state"]) > 0]
+        poses = [ep["action"][0] for ep in (train_eps + test_eps) if len(ep["action"]) > 0]
         if not poses:
             return None
         return np.mean(np.stack(poses, axis=0), axis=0).astype(np.float32)
@@ -154,15 +155,45 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     def _send_init_pose() -> None:
         if init_pose is None:
             return
-        action = torch.tensor(init_pose, dtype=torch.float32)
+        action_dim = int(action_norm.min.shape[0])
+        pose = init_pose
+        if pose.shape[0] != action_dim:
+            if pose.shape[0] > action_dim:
+                print(
+                    {
+                        "init_pose_dim": int(pose.shape[0]),
+                        "action_dim": action_dim,
+                        "init_pose": "truncate_to_action_dim",
+                    }
+                )
+                pose = pose[:action_dim]
+            else:
+                print(
+                    {
+                        "init_pose_dim": int(pose.shape[0]),
+                        "action_dim": action_dim,
+                        "init_pose": "skip_send_dim_mismatch",
+                    }
+                )
+                return
+        action = torch.tensor(pose, dtype=torch.float32)
         repeat = int(getattr(cfg.replay, "init_pose_repeat", 1) or 1)
         for _ in range(max(repeat, 1)):
-            replay.send(action=action, fps=cfg.replay.fps)
+            if cfg.replay.send_action:
+                replay.send(action=action, fps=cfg.replay.fps)
+            time.sleep(0.2)
 
     image_q: list[torch.Tensor] = []
     state_q: list[np.ndarray] = []
     pred_actions: list[np.ndarray] = []
 
+    print(
+        {
+            "init_pose_send": True,
+            "repeat": int(getattr(cfg.replay, "init_pose_repeat", 1) or 1),
+            "init_pose_mean": init_pose.tolist() if init_pose is not None else None,
+        }
+    )
     _send_init_pose()
 
     # モデルを評価モード（学習をしないモード）に切り替え
@@ -226,8 +257,8 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         action = action_norm.denormalize(action_normed)
         action_t = torch.tensor(action, dtype=torch.float32)
         
-        # グラフ作成用に推論結果を記録
-        pred_actions.append(action)
+        # グラフ作成用に推論結果を記録（正規化スケールのまま）
+        pred_actions.append(action_normed)
 
         # --- 6. ロボットへの指令送信 ---
         if cfg.replay.send_action:

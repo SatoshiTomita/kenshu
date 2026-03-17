@@ -29,7 +29,7 @@ class Trainer:
             state = state.to(self.device)
             action = action.to(self.device)
             if self.state_noise_std > 0.0 and train:
-                # stateにノイズを加えてロバスト性を上げる
+                # followerのデータにノイズを加えてロバスト性を上げる
                 noise = torch.randn_like(state) * self.state_noise_std
                 state = state + noise
             pred = self.model(image, state)
