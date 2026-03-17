@@ -9,6 +9,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from src.data.episode_dataset import Normalizer
+from src.utils.train_utils import load_episodes
 from src.models.policy import PolicyNetwork
 from src.models.vision import VisionNetwork
 from src.models.vision_policy import VisionPolicyModel
@@ -140,10 +141,30 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     )
 
     # 過去のデータを溜めておくための「待ち行列（キュー）」を用意
+    def _compute_init_pose() -> np.ndarray | None:
+        # data の t=0 平均姿勢を使う
+        train_eps, test_eps = load_episodes(cfg)
+        poses = [ep["state"][0] for ep in (train_eps + test_eps) if len(ep["state"]) > 0]
+        if not poses:
+            return None
+        return np.mean(np.stack(poses, axis=0), axis=0).astype(np.float32)
+
+    init_pose = _compute_init_pose()
+
+    def _send_init_pose() -> None:
+        if init_pose is None:
+            return
+        action = torch.tensor(init_pose, dtype=torch.float32)
+        repeat = int(getattr(cfg.replay, "init_pose_repeat", 1) or 1)
+        for _ in range(max(repeat, 1)):
+            replay.send(action=action, fps=cfg.replay.fps)
+
     image_q: list[torch.Tensor] = []
     state_q: list[np.ndarray] = []
     pred_actions: list[np.ndarray] = []
-    
+
+    _send_init_pose()
+
     # モデルを評価モード（学習をしないモード）に切り替え
     model.eval()
 
@@ -219,5 +240,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     # 全ステップ終了後、アクションの推移グラフを保存して終了
     if pred_actions:
         save_action_figs(pred_all=np.asarray(pred_actions, dtype=np.float32), gt_all=None, fig_dir=fig_dir, prefix="online")
+
+    _send_init_pose()
     
     return {"replay_steps": int(cfg.replay.steps), "send_action": bool(cfg.replay.send_action)}
