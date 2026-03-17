@@ -28,3 +28,14 @@ class PolicyNetwork(nn.Module):
         x = torch.cat([features, state], dim=-1)
         out, _ = self.rnn(x)
         return self.head(out)
+
+    def forward_step(
+        self,
+        features: torch.Tensor,
+        state: torch.Tensor,
+        h: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        # features/state: [B, 1, *] -> action_hat: [B, 1, Da]
+        x = torch.cat([features, state], dim=-1)
+        out, h_next = self.rnn(x, h)
+        return self.head(out), h_next

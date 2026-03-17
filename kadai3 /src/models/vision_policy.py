@@ -21,3 +21,13 @@ class VisionPolicyModel(nn.Module):
         # 特徴量とstateを使って行動を予測
         # PolicyNetworkに特徴量i_tとfollowerの関節q_tを渡し、Leaderの関節a_tを予測
         return self.policy(feature, state)
+
+    def forward_step(
+        self,
+        image: torch.Tensor,
+        state: torch.Tensor,
+        h: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        # image/state: [B, 1, ...] -> action_hat: [B, 1, Da]
+        feature = self.vision(image)
+        return self.policy.forward_step(feature, state, h)

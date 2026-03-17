@@ -183,8 +183,6 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 replay.send(action=action, fps=cfg.replay.fps)
             time.sleep(0.2)
 
-    image_q: list[torch.Tensor] = []
-    state_q: list[np.ndarray] = []
     pred_actions: list[np.ndarray] = []
 
     print(
@@ -199,6 +197,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     # モデルを評価モード（学習をしないモード）に切り替え
     model.eval()
 
+    h: torch.Tensor | None = None
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
     for _ in range(int(cfg.replay.steps)):
         # カメラ映像とロボットの現在の関節角度（state）を取得
@@ -227,30 +226,16 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 align_corners=False,
             ).squeeze(0)
 
-        # --- 4. 時系列データの蓄積（スライディングウィンドウ） ---
-        image_q.append(image_t)
-        state_q.append(state)
-        print(f"Queue size: {len(image_q)}")
-        
-        # 設定されたシーケンス長（seq_len）に達するまで推論をスキップ
-        if len(image_q) < int(cfg.dataset.seq_len):
-            continue
-            
-        # 常に「最新のseq_len個分」だけを保持するように整理
-        image_q = image_q[-int(cfg.dataset.seq_len) :]
-        state_q = state_q[-int(cfg.dataset.seq_len) :]
-
-        # モデルに入力するために [Batch=1, Seq, C, H, W] の形にまとめる
-        image_in = torch.stack(image_q, dim=0).unsqueeze(0).to(device)
-        
-        # 関節角度も正規化してモデルへ送る準備
-        state_np = np.stack(state_q, axis=0)
-        state_np = state_norm.normalize(state_np)
-        state_in = torch.tensor(state_np, dtype=torch.float32, device=device).unsqueeze(0)
+        # --- 4. 1ステップ入力を作成（隠れ状態を使い回す） ---
+        image_in = image_t.unsqueeze(0).unsqueeze(0).to(device)  # [B=1,S=1,C,H,W]
+        state_np = state_norm.normalize(state[None, :])  # [1,D]
+        state_in = torch.tensor(state_np, dtype=torch.float32, device=device).unsqueeze(0)  # [1,1,D]
 
         # --- 5. モデルによる推論（意思決定） ---
-        with torch.no_grad(): 
-            action_normed = model(image_in, state_in)[0, -1].detach().cpu().numpy()
+        with torch.no_grad():
+            action_seq, h = model.forward_step(image_in, state_in, h)
+            h = h.detach() if h is not None else None
+            action_normed = action_seq[0, 0].detach().cpu().numpy()
         print(f"Action predicted (normalized): {action_normed}")
         
         # 正規化された数値を「実際のロボットの角度」に復元（逆正規化）

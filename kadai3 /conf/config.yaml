@@ -1,5 +1,5 @@
 mode: online_test  # train | online_test
-train_name: epoch1000_std0.03
+train_name: epoch1500_std0.03_new
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: epoch1000_std=0.03
+    note: epoch1500_std0.03_new
 
 dataset:
   root: data
@@ -43,11 +43,11 @@ dataset:
 # vision networkの各種設定
 vision:
   in_channels: 3
-  conv_channels: [32, 64, 128]
+  conv_channels: [16, 32, 64]
   kernels: [3, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
-  feature_dim: 16
+  feature_dim: 32
 
 # policy networkの各種設定
 policy:
@@ -61,12 +61,12 @@ trainer:
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
-  state_noise_std: 0
+  state_noise_std: 0.03
 
 replay:
   # replayを起動するかどうか
   enable: true
-  model_path: "result/epoch1000_std0.03/best_model.pt"  # empty means result/<train_name>/best_model.pt
+  model_path: "result/epoch1500_std0.03_new/best_model.pt"  # empty means result/<train_name>/best_model.pt
   steps: 150
   # send loop rate (camera fps is not set here)
   fps: 5
