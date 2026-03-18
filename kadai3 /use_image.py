@@ -12,7 +12,7 @@ _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
 from src.utils.app_helpers import build_model
-from src.utils.train_utils import load_normalizers, resolve_device, set_seed
+from src.utils.train_utils import load_cfg, load_normalizers, resolve_device, set_seed
 
 
 def _load_blosc2_tensor(path: Path) -> np.ndarray:
@@ -59,15 +59,16 @@ def main(cfg):
     set_seed(int(cfg.seed))
     device = resolve_device(cfg.device)
 
-    result_dir = Path(cfg.result_root) / cfg.train_name
-    state_norm, action_norm = load_normalizers(result_dir / "normalizer.yaml")
+    model_dir = Path(cfg.result_root) / (cfg.replay.model_name or cfg.train_name)
+    loaded_cfg = load_cfg(model_dir / "config.yaml")
+    state_norm, action_norm = load_normalizers(model_dir / "normalizer.yaml")
 
     model = build_model(
-        cfg,
+        loaded_cfg,
         state_dim=len(state_norm.min),
         action_dim=len(action_norm.min),
     ).to(device)
-    model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else result_dir / "best_model.pt"
+    model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else model_dir / "best_model.pt"
     if not model_path.exists():
         raise RuntimeError(f"Model not found: {model_path}")
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -108,15 +109,15 @@ def main(cfg):
     for t in range(steps):
         idx = t % int(image_seq.shape[0])
         obs = replay.get_observations(max_depth=cfg.replay.max_depth)
-        state = np.asarray(obs[cfg.replay.state_key], dtype=np.float32)
+        state = np.asarray(obs[loaded_cfg.replay.state_key], dtype=np.float32)
 
         image_t = torch.tensor(image_seq[idx], dtype=torch.float32)
         image_q.append(image_t)
         state_q.append(state)
-        if len(image_q) < int(cfg.dataset.seq_len):
+        if len(image_q) < int(loaded_cfg.dataset.seq_len):
             continue
-        image_q = image_q[-int(cfg.dataset.seq_len) :]
-        state_q = state_q[-int(cfg.dataset.seq_len) :]
+        image_q = image_q[-int(loaded_cfg.dataset.seq_len) :]
+        state_q = state_q[-int(loaded_cfg.dataset.seq_len) :]
 
         image_in = torch.stack(image_q, dim=0).unsqueeze(0).to(device)
         state_np = np.stack(state_q, axis=0)

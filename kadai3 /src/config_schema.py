@@ -69,6 +69,7 @@ class TrainerConfig:
 class ReplayConfig:
     enable: bool = True
     model_path: str = ""
+    model_name: str = ""
     steps: int = 150
     fps: int = 30
     ema: float = 0.0

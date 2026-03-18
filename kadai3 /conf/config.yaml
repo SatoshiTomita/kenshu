@@ -66,6 +66,8 @@ trainer:
 replay:
   # replayを起動するかどうか
   enable: true
+  # model name in result/ (if set, overrides train_name for loading)
+  model_name: ""
   model_path: "result/epoch500_std0.03_new/best_model.pt"  # empty means result/<train_name>/best_model.pt
   steps: 40
   # send loop rate (camera fps is not set here)

@@ -48,6 +48,12 @@ def save_cfg(cfg: MainConfig, path: Path) -> None:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=False)
 
 
+def load_cfg(path: Path) -> MainConfig:
+    # YAML設定を読み込み
+    data = yaml.safe_load(path.read_text())
+    return OmegaConf.merge(OmegaConf.structured(MainConfig), data)
+
+
 def save_normalizers(state_norm: Normalizer, action_norm: Normalizer, path: Path) -> None:
     # 正規化パラメータを保存
     payload = {"state": state_norm.to_dict(), "action": action_norm.to_dict()}

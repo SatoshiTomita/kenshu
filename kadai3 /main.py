@@ -21,12 +21,19 @@ from src.trainer.trainer import Trainer
 from src.utils.train_utils import (
     load_episodes,
     load_normalizers,
+    load_cfg,
     resolve_device,
     save_cfg,
     save_normalizers,
     set_seed,
     split_indices,
 )
+
+
+def _resolve_model_dir(cfg) -> Path:
+    if getattr(cfg.replay, "model_name", ""):
+        return Path(cfg.result_root) / cfg.replay.model_name
+    return Path(cfg.result_root) / cfg.train_name
 
 
 def _load_model(cfg, device: torch.device, state_dim: int, action_dim: int, model_path: Path):
@@ -50,17 +57,19 @@ def main(cfg):
 
     # online_test(推論)を行う処理
     if cfg.mode == "online_test":
-        state_norm, action_norm = load_normalizers(result_dir / "normalizer.yaml")
-        model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else result_dir / "best_model.pt"
+        model_dir = _resolve_model_dir(cfg)
+        loaded_cfg = load_cfg(model_dir / "config.yaml")
+        state_norm, action_norm = load_normalizers(model_dir / "normalizer.yaml")
+        model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else model_dir / "best_model.pt"
         model = _load_model(
-            cfg,
+            loaded_cfg,
             device=device,
             state_dim=len(state_norm.min),
             action_dim=len(action_norm.min),
             model_path=model_path,
         )
         if cfg.replay.enable:
-            run_replay(cfg, model=model, state_norm=state_norm, action_norm=action_norm, device=device, fig_dir=fig_dir)
+            run_replay(loaded_cfg, model=model, state_norm=state_norm, action_norm=action_norm, device=device, fig_dir=fig_dir)
         print({"mode": "online_test", "device": str(device)})
         return
 
