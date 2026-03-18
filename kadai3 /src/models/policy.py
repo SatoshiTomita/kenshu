@@ -23,11 +23,16 @@ class PolicyNetwork(nn.Module):
             raise ValueError(f"Unsupported rnn_type: {rnn_type}")
         self.head = nn.Linear(hidden_dim, output_dim)
 
-    def forward(self, features: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        features: torch.Tensor,
+        state: torch.Tensor,
+        h: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         # features: [B, S, F], state: [B, S, Dq] -> action_hat: [B, S, Da]
         x = torch.cat([features, state], dim=-1)
-        out, _ = self.rnn(x)
-        return self.head(out)
+        out, h_next = self.rnn(x, h)
+        return self.head(out), h_next
 
     def forward_step(
         self,

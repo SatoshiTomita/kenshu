@@ -137,7 +137,8 @@ def main(cfg):
         state_in = torch.tensor(state_np, dtype=torch.float32, device=device).unsqueeze(0)
 
         with torch.no_grad():
-            action_normed = model(image_in, state_in)[0, -1].detach().cpu().numpy()
+            action_seq, _ = model(image_in, state_in)
+            action_normed = action_seq[0, -1].detach().cpu().numpy()
         action = action_norm.denormalize(action_normed)
         action_t = torch.tensor(action, dtype=torch.float32)
 
