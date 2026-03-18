@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover
 _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
-from src.utils.app_helpers import build_model, offline_test, run_replay
+from src.utils.app_helpers import build_model, online_test, run_replay
 from src.data.episode_dataset import EpisodeDataset, compute_normalizer
 from src.dataloader.dataloader import myDataloader
 from src.trainer.trainer import Trainer
@@ -55,8 +55,8 @@ def main(cfg):
     result_dir.mkdir(parents=True, exist_ok=True)
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    # online_test(推論)を行う処理
-    if cfg.mode == "online_test":
+    # offline_test(推論)を行う処理
+    if cfg.mode == "offline_test":
         model_dir = _resolve_model_dir(cfg)
         loaded_cfg = load_cfg(model_dir / "config.yaml")
         state_norm, action_norm = load_normalizers(model_dir / "normalizer.yaml")
@@ -70,7 +70,7 @@ def main(cfg):
         )
         if cfg.replay.enable:
             run_replay(loaded_cfg, model=model, state_norm=state_norm, action_norm=action_norm, device=device, fig_dir=fig_dir)
-        print({"mode": "online_test", "device": str(device)})
+        print({"mode": "offline_test", "device": str(device)})
         return
 
     train_episodes, explicit_test_episodes = load_episodes(cfg)
@@ -170,20 +170,20 @@ def main(cfg):
         if use_wandb:
             wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss})
     model.load_state_dict(torch.load(best_path, map_location=device))
-    offline_metrics = offline_test(
+    online_metrics = online_test(
         model=model,
         loader=test_loader,
         device=device,
         action_norm=action_norm,
         fig_dir=fig_dir,
-        prefix="offline",
+        prefix="online",
     )
 
     save_cfg(cfg, result_dir / "config.yaml")
     save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
 
     if use_wandb:
-        wandb.log({"final_offline_mse": offline_metrics["offline_mse"]})
+        wandb.log({"final_online_mse": online_metrics["online_mse"]})
         wandb.finish()
 
     print(
@@ -194,7 +194,7 @@ def main(cfg):
             "val_samples": len(val_ds),
             "test_samples": len(test_ds),
             "best_model": str(best_path),
-            "offline_mse": offline_metrics["offline_mse"],
+            "online_mse": online_metrics["online_mse"],
             "epochs": int(cfg.trainer.epochs),
         }
     )

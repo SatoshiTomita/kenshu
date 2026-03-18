@@ -88,14 +88,14 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
     fig.savefig(fig_dir / f"{prefix}_action_all.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
-# オフラインテストの実行
-def offline_test(
+# オンラインテストの実行
+def online_test(
     model: nn.Module,
     loader: DataLoader,
     device: torch.device,
     action_norm: Normalizer,
     fig_dir: Path,
-    prefix: str = "offline",
+    prefix: str = "online",
 ) -> dict:
     model.eval()
     all_pred: list[np.ndarray] = []
@@ -255,7 +255,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     # 全ステップ終了後、アクションの推移グラフを保存して終了
     if pred_actions:
-        save_action_figs(pred_all=np.asarray(pred_actions, dtype=np.float32), gt_all=None, fig_dir=fig_dir, prefix="online")
+        save_action_figs(pred_all=np.asarray(pred_actions, dtype=np.float32), gt_all=None, fig_dir=fig_dir, prefix="offline")
 
     _send_init_pose()
     
