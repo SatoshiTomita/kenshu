@@ -101,13 +101,37 @@ def online_test(
     fig_dir: Path,
     prefix: str = "online",
 ) -> dict:
+    from PIL import Image
+
     model.eval()
     all_pred: list[np.ndarray] = []
     all_gt: list[np.ndarray] = []
     mse_values: list[float] = []
+    saved_gif = False
 
     with torch.no_grad():
         for image, state, action in loader:
+            if not saved_gif:
+                seq = image[0].detach().cpu().numpy()  # [T,C,H,W]
+                frames: list[Image.Image] = []
+                for f in seq:
+                    if f.shape[0] in (1, 3):
+                        img = np.transpose(f, (1, 2, 0))
+                    else:
+                        img = f
+                    img = np.clip(img, 0.0, 1.0)
+                    img_u8 = (img * 255.0).astype(np.uint8)
+                    frames.append(Image.fromarray(img_u8))
+                if frames:
+                    gif_path = fig_dir / f"{prefix}_camera.gif"
+                    frames[0].save(
+                        gif_path,
+                        save_all=True,
+                        append_images=frames[1:],
+                        duration=100,
+                        loop=0,
+                    )
+                    saved_gif = True
             image = image.to(device)
             state = state.to(device)
             action = action.to(device)
@@ -133,6 +157,7 @@ def online_test(
 # 実機でのテストコード
 def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Normalizer, device: torch.device, fig_dir: Path):
     from lerobot_utils import Replay  # type: ignore
+    from PIL import Image
 
     # --- 1. ハードウェアの初期化 ---
     # カメラやロボットアーム（USBポート）との接続を確立する
@@ -188,6 +213,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             time.sleep(0.2)
 
     pred_actions: list[np.ndarray] = []
+    frames: list[Image.Image] = []
 
     print(
         {
@@ -230,6 +256,17 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 align_corners=False,
             ).squeeze(0)
 
+        # GIF用に元画像を保存
+        try:
+            img = np.asarray(image)
+            if img.ndim == 3 and img.shape[0] in (1, 3):
+                img = np.transpose(img, (1, 2, 0))
+            img = np.clip(img, 0.0, 1.0)
+            img_u8 = (img * 255.0).astype(np.uint8)
+            frames.append(Image.fromarray(img_u8))
+        except Exception:
+            pass
+
         # --- 4. 1ステップ入力を作成（隠れ状態を使い回す） ---
         image_in = image_t.unsqueeze(0).unsqueeze(0).to(device)  # [B=1,S=1,C,H,W]
         state_np = state_norm.normalize(state[None, :])  # [1,D]
@@ -260,6 +297,16 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     # 全ステップ終了後、アクションの推移グラフを保存して終了
     if pred_actions:
         save_action_figs(pred_all=np.asarray(pred_actions, dtype=np.float32), gt_all=None, fig_dir=fig_dir, prefix="offline")
+
+    if frames:
+        gif_path = fig_dir / "online_camera.gif"
+        frames[0].save(
+            gif_path,
+            save_all=True,
+            append_images=frames[1:],
+            duration=100,
+            loop=0,
+        )
 
     _send_init_pose()
     
