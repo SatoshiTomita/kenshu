@@ -65,6 +65,8 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
         ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
         if gt_s is not None:
             ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        if prefix == "online":
+            ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"{prefix} action dim {d} (smoothed)")
         ax.legend()
         fig.savefig(fig_dir / f"{prefix}_action_dim_{d}.png", dpi=150, bbox_inches="tight")
@@ -79,6 +81,8 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
         ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
         if gt_s is not None:
             ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        if prefix == "online":
+            ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"Action dim {d} (smoothed)")
         ax.legend()
     for idx in range(n_dims, nrows * ncols):
