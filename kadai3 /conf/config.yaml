@@ -1,5 +1,5 @@
-mode: online_test  # train | online_test
-train_name: epoch500_std0.03_new
+mode: train  # train | online_test
+train_name: dev/cnn_epoch1000
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: epoch500_std0.03_new
+    note: dev/cnn_epoch1000
 
 dataset:
   root: data
@@ -39,6 +39,7 @@ dataset:
   aug_brightness: 0.1
   aug_contrast: 0.1
   aug_shift: 4
+  aug_crop: 0
 
 # vision networkの各種設定
 vision:
@@ -57,7 +58,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 500
+  epochs: 1000
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0

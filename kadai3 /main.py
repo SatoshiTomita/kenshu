@@ -106,6 +106,7 @@ def main(cfg):
         aug_brightness=float(cfg.dataset.aug_brightness),
         aug_contrast=float(cfg.dataset.aug_contrast),
         aug_shift=int(cfg.dataset.aug_shift),
+        aug_crop=int(cfg.dataset.aug_crop),
     )
     val_ds = EpisodeDataset(val_eps, state_norm, action_norm)
     test_ds = EpisodeDataset(test_eps, state_norm, action_norm)

@@ -36,6 +36,7 @@ class DatasetConfig:
     aug_brightness: float = 0.1
     aug_contrast: float = 0.1
     aug_shift: int = 4
+    aug_crop: int = 0
 
 
 @dataclass
