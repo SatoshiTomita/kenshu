@@ -32,7 +32,17 @@ from src.utils.train_utils import (
 
 def _resolve_model_dir(cfg) -> Path:
     if getattr(cfg.replay, "model_name", ""):
-        return Path(cfg.result_root) / cfg.replay.model_name
+        root = Path(cfg.result_root)
+        direct = root / cfg.replay.model_name
+        if direct.exists():
+            return direct
+        # fallback: search nested dirs by name
+        matches = [p for p in root.rglob(cfg.replay.model_name) if p.is_dir()]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise RuntimeError({"model_dir_ambiguous": [str(p) for p in matches]})
+        return direct
     return Path(cfg.result_root) / cfg.train_name
 
 
@@ -56,9 +66,16 @@ def main(cfg):
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     # offline_test(推論)を行う処理
-    if cfg.mode == "offline_test":
+    if cfg.mode in ("online_test", "offline_test"):
         model_dir = _resolve_model_dir(cfg)
-        loaded_cfg = load_cfg(model_dir / "config.yaml")
+        fig_dir = model_dir / "fig"
+        fig_dir.mkdir(parents=True, exist_ok=True)
+        cfg_path = model_dir / "config.yaml"
+        if cfg_path.exists():
+            loaded_cfg = load_cfg(cfg_path)
+        else:
+            print({"warn": "model_config_not_found", "path": str(cfg_path)})
+            loaded_cfg = cfg
         state_norm, action_norm = load_normalizers(model_dir / "normalizer.yaml")
         model_path = Path(cfg.replay.model_path) if cfg.replay.model_path else model_dir / "best_model.pt"
         model = _load_model(
@@ -70,7 +87,7 @@ def main(cfg):
         )
         if cfg.replay.enable:
             run_replay(loaded_cfg, model=model, state_norm=state_norm, action_norm=action_norm, device=device, fig_dir=fig_dir)
-        print({"mode": "offline_test", "device": str(device)})
+        print({"mode": str(cfg.mode), "device": str(device)})
         return
 
     train_episodes, explicit_test_episodes = load_episodes(cfg)

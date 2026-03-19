@@ -55,7 +55,7 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
 
     if pred_all.size == 0:
         return
-    pred_s = _moving_avg(pred_all, win=5)
+    pred_s = np.clip(_moving_avg(pred_all, win=5), -1.0, 1.0)
     gt_s = _moving_avg(gt_all, win=5) if gt_all is not None else None
     n_dims = pred_s.shape[1]
 
@@ -140,12 +140,12 @@ def online_test(
             pred_np = pred.detach().cpu().numpy().reshape(-1, pred.shape[-1])
             gt_np = action.detach().cpu().numpy().reshape(-1, action.shape[-1])
 
-            pred_denorm = action_norm.denormalize(pred_np)
-            gt_denorm = action_norm.denormalize(gt_np)
-            mse_values.append(float(np.mean((pred_denorm - gt_denorm) ** 2)))
+            pred_norm = action_norm.normalize(pred_np)
+            gt_norm = action_norm.normalize(gt_np)
+            mse_values.append(float(np.mean((pred_norm - gt_norm) ** 2)))
 
-            all_pred.append(pred_denorm)
-            all_gt.append(gt_denorm)
+            all_pred.append(pred_norm)
+            all_gt.append(gt_norm)
 
     pred_all = np.concatenate(all_pred, axis=0) if all_pred else np.zeros((0, 1), dtype=np.float32)
     gt_all = np.concatenate(all_gt, axis=0) if all_gt else np.zeros((0, 1), dtype=np.float32)
@@ -157,7 +157,7 @@ def online_test(
 # 実機でのテストコード
 def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Normalizer, device: torch.device, fig_dir: Path):
     from lerobot_utils import Replay  # type: ignore
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
 
     # --- 1. ハードウェアの初期化 ---
     # カメラやロボットアーム（USBポート）との接続を確立する
@@ -229,7 +229,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     h: torch.Tensor | None = None
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
-    for _ in range(int(cfg.replay.steps)):
+    for step_idx in range(int(cfg.replay.steps)):
         # カメラ映像とロボットの現在の関節角度（state）を取得
         obs = replay.get_observations(max_depth=cfg.replay.max_depth)
         image = obs[cfg.replay.image_key]
@@ -256,14 +256,27 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 align_corners=False,
             ).squeeze(0)
 
-        # GIF用に元画像を保存
+        # GIF用に実機カメラの元画像を保存（色とスケールを補正）
         try:
             img = np.asarray(image)
             if img.ndim == 3 and img.shape[0] in (1, 3):
                 img = np.transpose(img, (1, 2, 0))
-            img = np.clip(img, 0.0, 1.0)
-            img_u8 = (img * 255.0).astype(np.uint8)
-            frames.append(Image.fromarray(img_u8))
+            img = img.astype(np.float32)
+            if img.max() > 1.0:
+                img = np.clip(img, 0.0, 255.0)
+            else:
+                img = np.clip(img, 0.0, 1.0) * 255.0
+            img_u8 = img.astype(np.uint8)
+            if img_u8.ndim == 2:
+                frame = Image.fromarray(img_u8, mode="L").convert("RGB")
+            else:
+                frame = Image.fromarray(img_u8, mode="RGB")
+            draw = ImageDraw.Draw(frame)
+            text = f"step {step_idx + 1}"
+            # 文字が見えやすいように背景を描画
+            draw.rectangle((4, 4, 80, 18), fill=(0, 0, 0))
+            draw.text((6, 6), text, fill=(255, 255, 255), font=ImageFont.load_default())
+            frames.append(frame)
         except Exception:
             pass
 
@@ -300,13 +313,19 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     if frames:
         gif_path = fig_dir / "online_camera.gif"
-        frames[0].save(
-            gif_path,
-            save_all=True,
-            append_images=frames[1:],
-            duration=100,
-            loop=0,
-        )
+        try:
+            frames[0].save(
+                gif_path,
+                save_all=True,
+                append_images=frames[1:],
+                duration=100,
+                loop=0,
+            )
+            print({"gif_saved": str(gif_path), "frames": len(frames)})
+        except Exception as e:
+            print({"gif_save_error": str(e), "gif_path": str(gif_path), "frames": len(frames)})
+    else:
+        print({"gif_saved": False, "reason": "no_frames"})
 
     _send_init_pose()
     
