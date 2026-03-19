@@ -135,7 +135,7 @@ def online_test(
             image = image.to(device)
             state = state.to(device)
             action = action.to(device)
-            pred, _ = model(image, state)
+            pred, _, _ = model(image, state)
 
             pred_np = pred.detach().cpu().numpy().reshape(-1, pred.shape[-1])
             gt_np = action.detach().cpu().numpy().reshape(-1, action.shape[-1])

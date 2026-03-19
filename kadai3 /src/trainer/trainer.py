@@ -32,8 +32,10 @@ class Trainer:
                 # followerのデータにノイズを加えてロバスト性を上げる
                 noise = torch.randn_like(state) * self.state_noise_std
                 state = state + noise
-            pred, _ = self.model(image, state)
-            loss = self.loss_fn(pred, action)
+            pred, _, recon = self.model(image, state)
+            loss_action = self.loss_fn(pred, action)
+            loss_recon = self.loss_fn(recon, image)
+            loss = loss_action + (1.0 * loss_recon)
             if train:
                 self.optimizer.zero_grad()
                 loss.backward()

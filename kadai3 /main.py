@@ -5,7 +5,7 @@ import sys
 
 import hydra
 import torch
-
+import numpy as np
 try:
     import wandb
 except Exception:  # pragma: no cover
@@ -196,6 +196,31 @@ def main(cfg):
         fig_dir=fig_dir,
         prefix="online",
     )
+
+    # 再構成画像をグリッドで保存（学習後に1回、16枚）
+    for image, state, _ in test_loader:
+        image = image.to(device)
+        state = state.to(device)
+        with torch.no_grad():
+            _, _, recon = model(image, state)
+        recon = recon[0].detach().cpu().numpy()  # [T,C,H,W]
+        n = min(16, recon.shape[0])
+        grid_h, grid_w = 4, 4
+        c = recon.shape[1]
+        h, w = recon.shape[2], recon.shape[3]
+        canvas = np.zeros((grid_h * h, grid_w * w, 3), dtype=np.uint8)
+        for i in range(n):
+            r, cidx = divmod(i, grid_w)
+            img = recon[i]
+            if img.shape[0] == 1:
+                img = np.repeat(img, 3, axis=0)
+            img = img.transpose(1, 2, 0)
+            img = np.clip(img, 0.0, 1.0) * 255.0
+            canvas[r * h : (r + 1) * h, cidx * w : (cidx + 1) * w] = img.astype(np.uint8)
+        from PIL import Image
+
+        Image.fromarray(canvas).save(fig_dir / "recon_grid.png")
+        break
 
     save_cfg(cfg, result_dir / "config.yaml")
     save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")
