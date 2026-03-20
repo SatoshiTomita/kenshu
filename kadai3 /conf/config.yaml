@@ -1,5 +1,5 @@
-mode: online_test  # train | online_test
-train_name: dev/cnn_epoch1000_rnn_new
+mode: train  # train | online_test
+train_name: dev/cnn_epoch100_rnn_new
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: dev/cnn_epoch1000_rnn_new
+    note: dev/cnn_epoch100_rnn_new
 
 dataset:
   root: data
@@ -58,7 +58,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 1000
+  epochs: 100
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0

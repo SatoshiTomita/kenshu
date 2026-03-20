@@ -197,18 +197,21 @@ def main(cfg):
         prefix="online",
     )
 
-    # 再構成画像をグリッドで保存（学習後に1回、16枚）
+    # 再構成画像をグリッドで保存（学習後に1回、4枚を大きめに）
     for image, state, _ in test_loader:
         image = image.to(device)
         state = state.to(device)
         with torch.no_grad():
             _, _, recon = model(image, state)
         recon = recon[0].detach().cpu().numpy()  # [T,C,H,W]
-        n = min(16, recon.shape[0])
-        grid_h, grid_w = 4, 4
+        n = min(4, recon.shape[0])
+        grid_h, grid_w = 2, 2
+        scale = 2
         c = recon.shape[1]
         h, w = recon.shape[2], recon.shape[3]
-        canvas = np.zeros((grid_h * h, grid_w * w, 3), dtype=np.uint8)
+        canvas = np.zeros((grid_h * h * scale, grid_w * w * scale, 3), dtype=np.uint8)
+        from PIL import Image
+
         for i in range(n):
             r, cidx = divmod(i, grid_w)
             img = recon[i]
@@ -216,8 +219,12 @@ def main(cfg):
                 img = np.repeat(img, 3, axis=0)
             img = img.transpose(1, 2, 0)
             img = np.clip(img, 0.0, 1.0) * 255.0
-            canvas[r * h : (r + 1) * h, cidx * w : (cidx + 1) * w] = img.astype(np.uint8)
-        from PIL import Image
+            img_u8 = img.astype(np.uint8)
+            img_big = Image.fromarray(img_u8).resize((w * scale, h * scale), resample=Image.NEAREST)
+            canvas[
+                r * h * scale : (r + 1) * h * scale,
+                cidx * w * scale : (cidx + 1) * w * scale,
+            ] = np.asarray(img_big)
 
         Image.fromarray(canvas).save(fig_dir / "recon_grid.png")
         break

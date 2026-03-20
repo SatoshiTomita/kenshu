@@ -55,8 +55,12 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
 
     if pred_all.size == 0:
         return
-    pred_s = np.clip(_moving_avg(pred_all, win=5), -1.0, 1.0)
+    pred_s = _moving_avg(pred_all, win=5)
     gt_s = _moving_avg(gt_all, win=5) if gt_all is not None else None
+    if prefix == "online":
+        pred_s = np.clip(pred_s, -1.0, 1.0)
+        if gt_s is not None:
+            gt_s = np.clip(gt_s, -1.0, 1.0)
     n_dims = pred_s.shape[1]
 
     for d in range(n_dims):
@@ -140,12 +144,11 @@ def online_test(
             pred_np = pred.detach().cpu().numpy().reshape(-1, pred.shape[-1])
             gt_np = action.detach().cpu().numpy().reshape(-1, action.shape[-1])
 
-            pred_norm = action_norm.normalize(pred_np)
-            gt_norm = action_norm.normalize(gt_np)
-            mse_values.append(float(np.mean((pred_norm - gt_norm) ** 2)))
+            # EpisodeDataset で既に正規化済みなので、そのまま比較・描画する
+            mse_values.append(float(np.mean((pred_np - gt_np) ** 2)))
 
-            all_pred.append(pred_norm)
-            all_gt.append(gt_norm)
+            all_pred.append(pred_np)
+            all_gt.append(gt_np)
 
     pred_all = np.concatenate(all_pred, axis=0) if all_pred else np.zeros((0, 1), dtype=np.float32)
     gt_all = np.concatenate(all_gt, axis=0) if all_gt else np.zeros((0, 1), dtype=np.float32)
