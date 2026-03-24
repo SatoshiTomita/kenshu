@@ -1,4 +1,4 @@
-mode: online_test  # train | online_test
+mode: online_test  # train | offline_test 
 train_name: 3-24_new
 seed: 42
 result_root: result
@@ -48,7 +48,7 @@ vision:
   kernels: [3, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
-  feature_dim: 32
+  feature_dim: 64
 
 # policy networkの各種設定
 policy:
