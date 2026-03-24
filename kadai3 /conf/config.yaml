@@ -1,4 +1,4 @@
-mode: train  # train | online_test
+mode: online_test  # train | online_test
 train_name: 3-24_new
 seed: 42
 result_root: result

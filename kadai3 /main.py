@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover
 _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
-from src.utils.app_helpers import build_model, online_test, run_replay
+from src.utils.app_helpers import build_model, online_test, run_replay, save_follower_plots
 from src.dataloader.episode_dataset import EpisodeDataset, compute_normalizer
 from src.dataloader.dataloader import myDataloader
 from src.trainer.trainer import Trainer
@@ -195,6 +195,12 @@ def main(cfg):
         action_norm=action_norm,
         fig_dir=fig_dir,
         prefix="online",
+    )
+    save_follower_plots(
+        episodes=tr_eps + val_eps + test_eps,
+        state_norm=state_norm,
+        fig_dir=fig_dir,
+        noise_std=float(cfg.trainer.state_noise_std),
     )
 
     # 再構成画像をグリッドで保存（学習後に1回、4枚を大きめに）

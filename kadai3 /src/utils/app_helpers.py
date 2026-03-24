@@ -96,6 +96,47 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
     fig.savefig(fig_dir / f"{prefix}_action_all.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
+
+def save_follower_plots(
+    episodes: list[dict[str, np.ndarray]],
+    state_norm: Normalizer,
+    fig_dir: Path,
+    noise_std: float = 0.0,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    if not episodes:
+        return
+    states = [np.asarray(ep["state"], dtype=np.float32) for ep in episodes if len(ep.get("state", [])) > 0]
+    if not states:
+        return
+    episodes_norm = [state_norm.normalize(s) for s in states]
+    n_dims = episodes_norm[0].shape[1]
+
+    def _plot_series(data_eps: list[np.ndarray], title: str, out_name: str) -> None:
+        fig, axes = plt.subplots(nrows=n_dims, ncols=1, figsize=(12, 2 * n_dims), sharex=False)
+        if n_dims == 1:
+            axes = [axes]
+        for d, ax in enumerate(axes):
+            for ep in data_eps:
+                ax.plot(ep[:, d], linewidth=0.8, alpha=0.4)
+            ax.set_ylim(-1.05, 1.05)
+            ax.set_ylabel(f"joint {d}")
+            ax.grid(True, alpha=0.3)
+        axes[-1].set_xlabel("t (per episode)")
+        fig.suptitle(title, y=1.02)
+        fig.tight_layout()
+        fig.savefig(fig_dir / out_name, dpi=150)
+        plt.close(fig)
+
+    _plot_series(episodes_norm, "Normalized Follower Joint States", "joint_states_normalized.png")
+    if noise_std > 0.0:
+        rng = np.random.default_rng(0)
+        noisy_eps = [
+            ep + rng.normal(0.0, noise_std, size=ep.shape).astype(np.float32) for ep in episodes_norm
+        ]
+        _plot_series(noisy_eps, "Noisy Follower Joint States", "joint_states_noisy_normalized.png")
+
 # オンラインテストの実行
 def online_test(
     model: nn.Module,
@@ -212,7 +253,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         repeat = int(getattr(cfg.replay, "init_pose_repeat", 1) or 1)
         for _ in range(max(repeat, 1)):
             if cfg.replay.send_action:
-                replay.send(action=action, fps=cfg.replay.fps)
+                replay.send(action=action, fps=1)
             time.sleep(0.2)
 
     pred_actions: list[np.ndarray] = []
