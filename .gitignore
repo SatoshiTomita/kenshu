@@ -20,4 +20,6 @@ wandb/
 kadai3/src/data/
 kadai3/src/data/**
 kadai3/src/wandb/**
+kadai3/src/data_tmp/
+kadai3/src/data_tmp/**
 

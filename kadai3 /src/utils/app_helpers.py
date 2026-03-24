@@ -9,7 +9,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from src.data.episode_dataset import Normalizer
+from src.dataloader.episode_dataset import Normalizer
 from src.utils.train_utils import load_episodes
 from src.models.policy import PolicyNetwork
 from src.models.vision import VisionNetwork

@@ -1,5 +1,5 @@
 mode: train  # train | online_test
-train_name: dev/cnn_epoch100_rnn_new
+train_name: 3-24_new
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: dev/cnn_epoch100_rnn_new
+    note: 3-24_new
 
 dataset:
   root: data
@@ -52,23 +52,23 @@ vision:
 
 # policy networkの各種設定
 policy:
-  rnn_type: rnn  # rnn | gru
-  hidden_dim: 256
+  rnn_type: gru  # rnn | gru
+  hidden_dim: 32
   num_layers: 1
 
 # trainerの各種設定
 trainer:
-  epochs: 100
+  epochs: 1000
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
-  state_noise_std: 0.03
+  state_noise_std: 0.05
 
 replay:
   # replayを起動するかどうか
   enable: true
   # model name in result/ (if set, overrides train_name for loading)
-  model_name: "dev/cnn_epoch1000_rnn_new"
+  model_name: "3-24_new"
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 40
   # send loop rate (camera fps is not set here)

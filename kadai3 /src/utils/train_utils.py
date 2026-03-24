@@ -9,7 +9,7 @@ import torch
 import yaml
 
 from config_schema import MainConfig
-from data.episode_dataset import Normalizer, get_test_roots, get_train_roots, load_episodes_from_roots
+from dataloader.episode_dataset import Normalizer, get_test_roots, get_train_roots, load_episodes_from_roots
 
 
 def add_src_to_sys_path(root: Path) -> None:
@@ -70,9 +70,20 @@ def load_normalizers(path: Path) -> tuple[Normalizer, Normalizer]:
 def load_episodes(cfg: MainConfig):
     # データルートとvariant設定に応じてエピソードを読み込む
     data_root = Path(cfg.dataset.root)
+    train_dir = cfg.dataset.train_dir
+    test_dir = cfg.dataset.test_dir
+    if not (data_root / train_dir).exists():
+        # fallback: src/data 配下を使う
+        alt_root = Path(__file__).resolve().parents[1] / "data"
+        if alt_root.exists():
+            data_root = alt_root
+    # train_dir が無い場合は data_root 直下の left/right を使う
+    if not (data_root / train_dir).exists() and ((data_root / "right").exists() or (data_root / "left").exists()):
+        train_dir = "."
+        test_dir = "."
     train_roots = get_train_roots(
         data_root=data_root,
-        train_dir=cfg.dataset.train_dir,
+        train_dir=train_dir,
         left_dirname=cfg.dataset.left_dirname,
         right_dirname=cfg.dataset.right_dirname,
         variant=cfg.dataset.variant,
@@ -89,7 +100,7 @@ def load_episodes(cfg: MainConfig):
     if len(train_episodes) == 0:
         raise RuntimeError("No train episodes found. Check dataset.root/train and left/right folders.")
     test_episodes = load_episodes_from_roots(
-        roots=get_test_roots(data_root=data_root, test_dir=cfg.dataset.test_dir),
+        roots=get_test_roots(data_root=data_root, test_dir=test_dir),
         image_key=cfg.dataset.image_key,
         state_key=cfg.dataset.state_key,
         action_key=cfg.dataset.action_key,

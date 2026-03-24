@@ -15,7 +15,7 @@ _ROOT = Path(__file__).resolve().parent
 sys.path.append(str(_ROOT / "src"))
 
 from src.utils.app_helpers import build_model, online_test, run_replay
-from src.data.episode_dataset import EpisodeDataset, compute_normalizer
+from src.dataloader.episode_dataset import EpisodeDataset, compute_normalizer
 from src.dataloader.dataloader import myDataloader
 from src.trainer.trainer import Trainer
 from src.utils.train_utils import (
