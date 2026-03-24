@@ -61,15 +61,24 @@ def _plot_normalized(episodes: list[np.ndarray], title: str, out_name: str, ylab
         "#bcbd22",
         "#17becf",
     ]
+    legend_labels = []
     for d, ax in enumerate(axes):
         for i, ep in enumerate(episodes_norm):
             color = palette[(i // 15) % len(palette)]
-            ax.plot(ep[:, d], linewidth=0.8, alpha=0.4, color=color)
+            label = None
+            if d == 0 and i % 15 == 0:
+                start = i
+                end = min(i + 14, len(episodes_norm) - 1)
+                label = f"{start}-{end}"
+                legend_labels.append(label)
+            ax.plot(ep[:, d], linewidth=0.8, alpha=0.4, color=color, label=label)
         ax.set_ylim(-1.05, 1.05)
         ax.set_ylabel(f"{ylabel_prefix} {d}")
         ax.grid(True, alpha=0.3)
     axes[-1].set_xlabel("t (per episode)")
     fig.suptitle(title, y=1.02)
+    if legend_labels:
+        axes[0].legend(title="episode index", ncol=3, fontsize=8)
     fig.tight_layout()
 
     out_path = ROOT / out_name
