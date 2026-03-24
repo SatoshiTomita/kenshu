@@ -126,6 +126,8 @@ def main(cfg):
 
         with torch.no_grad():
             action_seq, _, _ = model(image_in, state_in)
+            if action_seq.ndim == 4:
+                action_seq = action_seq[:, :, 0, :]
             action_normed = action_seq[0, -1].detach().cpu().numpy()
         action = action_norm.denormalize(action_normed)
         action_t = torch.tensor(action, dtype=torch.float32)

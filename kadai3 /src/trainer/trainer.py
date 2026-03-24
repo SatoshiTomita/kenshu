@@ -33,7 +33,16 @@ class Trainer:
                 noise = torch.randn_like(state) * self.state_noise_std
                 state = state + noise
             pred, _, recon = self.model(image, state)
-            loss_action = self.loss_fn(pred, action)
+            if pred.ndim == 4:
+                # pred: [B,T,K,Da], action: [B,T,Da]なので形が合わない。ゆえに、actionをK個にずらして積み重ねる
+                b, t, k, da = pred.shape
+                if t < k:
+                    raise RuntimeError("Sequence length is shorter than action_horizon.")
+                target = torch.stack([action[:, i : i + t - k + 1, :] for i in range(k)], dim=2)
+                pred_use = pred[:, : t - k + 1, :, :]
+                loss_action = self.loss_fn(pred_use, target)
+            else:
+                loss_action = self.loss_fn(pred, action)
             loss_recon = self.loss_fn(recon, image)
             loss = loss_action + (1.0 * loss_recon)
             if train:

@@ -54,6 +54,7 @@ class PolicyConfig:
     rnn_type: str = "rnn"
     hidden_dim: int = 128
     num_layers: int = 1
+    action_horizon: int = 1
 
 
 @dataclass

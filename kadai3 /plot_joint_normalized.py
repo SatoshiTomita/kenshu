@@ -49,9 +49,22 @@ def _plot_normalized(episodes: list[np.ndarray], title: str, out_name: str, ylab
     fig, axes = plt.subplots(nrows=n_dims, ncols=1, figsize=(12, 2 * n_dims), sharex=False)
     if n_dims == 1:
         axes = [axes]
+    palette = [
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+    ]
     for d, ax in enumerate(axes):
-        for ep in episodes_norm:
-            ax.plot(ep[:, d], linewidth=0.8, alpha=0.4)
+        for i, ep in enumerate(episodes_norm):
+            color = palette[(i // 15) % len(palette)]
+            ax.plot(ep[:, d], linewidth=0.8, alpha=0.4, color=color)
         ax.set_ylim(-1.05, 1.05)
         ax.set_ylabel(f"{ylabel_prefix} {d}")
         ax.grid(True, alpha=0.3)
