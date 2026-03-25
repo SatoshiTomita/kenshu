@@ -147,6 +147,42 @@ def main(cfg):
     val_loader = dataloader.prepare_data(val_ds, shuffle=False)
     test_loader = dataloader.prepare_data(test_ds, shuffle=False)
 
+    # 画像拡張後のサンプルを保存（学習前に1回）
+    if bool(cfg.dataset.augment):
+        try:
+            batch = next(iter(train_loader))
+            image = batch[0]  # [B,T,C,H,W]
+            if image.ndim == 5:
+                # 1エピソード目の先頭フレーム群から16枚
+                frames = image[0]  # [T,C,H,W]
+            else:
+                frames = image
+            n = min(4, frames.shape[0])
+            h, w = frames.shape[2], frames.shape[3]
+            canvas = np.zeros((n * h, 2 * w, 3), dtype=np.uint8)
+            # 元画像を同じサンプルから読み直す（拡張前の比較用）
+            raw_eps = tr_eps[0]["image"] if tr_eps else frames.detach().cpu().numpy()
+            for i in range(n):
+                # 左: 元画像
+                raw = raw_eps[i]
+                if raw.shape[0] == 1:
+                    raw = np.repeat(raw, 3, axis=0)
+                raw = raw.transpose(1, 2, 0)
+                raw = np.clip(raw, 0.0, 1.0) * 255.0
+                canvas[i * h : (i + 1) * h, 0:w] = raw.astype(np.uint8)
+                # 右: 拡張後
+                img = frames[i].detach().cpu().numpy()
+                if img.shape[0] == 1:
+                    img = np.repeat(img, 3, axis=0)
+                img = img.transpose(1, 2, 0)
+                img = np.clip(img, 0.0, 1.0) * 255.0
+                canvas[i * h : (i + 1) * h, w:2 * w] = img.astype(np.uint8)
+            from PIL import Image
+
+            Image.fromarray(canvas).save(fig_dir / "augmented_compare.png")
+        except Exception:
+            pass
+
     # モデルの作成
     model = build_model(
         cfg,
