@@ -6,6 +6,8 @@ import sys
 import hydra
 import torch
 import numpy as np
+from torch import nn
+from torch.nn import functional as F
 try:
     import wandb
 except Exception:  # pragma: no cover
@@ -52,6 +54,14 @@ def _load_model(cfg, device: torch.device, state_dim: int, action_dim: int, mode
         raise RuntimeError(f"Model not found: {model_path}")
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model
+
+
+def _find_last_conv(module: nn.Module) -> nn.Module | None:
+    last_conv = None
+    for m in module.modules():
+        if isinstance(m, nn.Conv2d):
+            last_conv = m
+    return last_conv
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
@@ -150,36 +160,32 @@ def main(cfg):
     # 画像拡張後のサンプルを保存（学習前に1回）
     if bool(cfg.dataset.augment):
         try:
-            batch = next(iter(train_loader))
-            image = batch[0]  # [B,T,C,H,W]
-            if image.ndim == 5:
-                # 1エピソード目の先頭フレーム群から16枚
-                frames = image[0]  # [T,C,H,W]
-            else:
-                frames = image
-            n = min(4, frames.shape[0])
-            h, w = frames.shape[2], frames.shape[3]
-            canvas = np.zeros((n * h, 2 * w, 3), dtype=np.uint8)
-            # 元画像を同じサンプルから読み直す（拡張前の比較用）
-            raw_eps = tr_eps[0]["image"] if tr_eps else frames.detach().cpu().numpy()
-            for i in range(n):
-                # 左: 元画像
-                raw = raw_eps[i]
-                if raw.shape[0] == 1:
-                    raw = np.repeat(raw, 3, axis=0)
-                raw = raw.transpose(1, 2, 0)
-                raw = np.clip(raw, 0.0, 1.0) * 255.0
-                canvas[i * h : (i + 1) * h, 0:w] = raw.astype(np.uint8)
-                # 右: 拡張後
-                img = frames[i].detach().cpu().numpy()
-                if img.shape[0] == 1:
-                    img = np.repeat(img, 3, axis=0)
-                img = img.transpose(1, 2, 0)
-                img = np.clip(img, 0.0, 1.0) * 255.0
-                canvas[i * h : (i + 1) * h, w:2 * w] = img.astype(np.uint8)
+            sample_count = min(4, len(tr_eps))
             from PIL import Image
 
-            Image.fromarray(canvas).save(fig_dir / "augmented_compare.png")
+            for ep_idx in range(sample_count):
+                raw_eps = tr_eps[ep_idx]["image"]
+                # 1エピソード分をDatasetで取得（拡張後）
+                aug_image, _, _ = train_ds[ep_idx]
+                n = min(4, raw_eps.shape[0], aug_image.shape[0])
+                h, w = raw_eps.shape[2], raw_eps.shape[3]
+                canvas = np.zeros((n * h, 2 * w, 3), dtype=np.uint8)
+                for i in range(n):
+                    # 左: 元画像
+                    raw = raw_eps[i]
+                    if raw.shape[0] == 1:
+                        raw = np.repeat(raw, 3, axis=0)
+                    raw = raw.transpose(1, 2, 0)
+                    raw = np.clip(raw, 0.0, 1.0) * 255.0
+                    canvas[i * h : (i + 1) * h, 0:w] = raw.astype(np.uint8)
+                    # 右: 拡張後
+                    img = aug_image[i]
+                    if img.shape[0] == 1:
+                        img = np.repeat(img, 3, axis=0)
+                    img = img.transpose(1, 2, 0)
+                    img = np.clip(img, 0.0, 1.0) * 255.0
+                    canvas[i * h : (i + 1) * h, w:2 * w] = img.astype(np.uint8)
+                Image.fromarray(canvas).save(fig_dir / f"augmented_compare_ep{ep_idx}.png")
         except Exception:
             pass
 
@@ -232,6 +238,75 @@ def main(cfg):
         fig_dir=fig_dir,
         prefix="online",
     )
+
+    # Grad-CAM 可視化（学習データに対して1枚保存）
+    try:
+        batch = next(iter(test_loader))
+        image = batch[0].to(device)  # [B,T,C,H,W]
+        state = batch[1].to(device)
+
+        last_conv = _find_last_conv(model.vision.encoder)
+        if last_conv is not None:
+            activations: list[torch.Tensor] = []
+            gradients: list[torch.Tensor] = []
+
+            def _forward_hook(_m, _inp, out):
+                activations.append(out)
+
+            def _backward_hook(_m, _gin, gout):
+                gradients.append(gout[0])
+
+            h_fwd = last_conv.register_forward_hook(_forward_hook)
+            h_bwd = last_conv.register_full_backward_hook(_backward_hook)
+
+            model.zero_grad(set_to_none=True)
+            pred, _, _ = model(image, state)
+            if pred.ndim == 4:
+                pred = pred[:, :, 0, :]
+            score = pred[0, -1].mean()
+            score.backward()
+
+            h_fwd.remove()
+            h_bwd.remove()
+
+            if activations and gradients:
+                act = activations[0]
+                grad = gradients[0]
+                b, t, c, h, w = image.shape
+                idx = t - 1
+                feat = act[idx]  # [C,h,w]
+                g = grad[idx]
+                weights = g.mean(dim=(1, 2))
+                cam = (weights[:, None, None] * feat).sum(dim=0)
+                cam = F.relu(cam)
+                cam = cam - cam.min()
+                cam = cam / (cam.max() + 1.0e-8)
+                cam = cam.detach().cpu().numpy()
+
+                img = image[0, -1].detach().cpu().numpy()
+                if img.shape[0] == 1:
+                    img = np.repeat(img, 3, axis=0)
+                img = np.transpose(img, (1, 2, 0))
+                img = np.clip(img, 0.0, 1.0)
+
+                import matplotlib.pyplot as plt
+
+                # 左: 元画像 / 右: Grad-CAM重ね合わせ
+                plt.figure(figsize=(8, 4))
+                plt.subplot(1, 2, 1)
+                plt.imshow(img)
+                plt.axis("off")
+                plt.title("Input")
+                plt.subplot(1, 2, 2)
+                plt.imshow(img)
+                plt.imshow(cam, cmap="jet", alpha=0.45)
+                plt.axis("off")
+                plt.title("Grad-CAM")
+                plt.tight_layout()
+                plt.savefig(fig_dir / "gradcam_train.png", dpi=150, bbox_inches="tight")
+                plt.close()
+    except Exception:
+        pass
     save_follower_plots(
         episodes=tr_eps + val_eps + test_eps,
         state_norm=state_norm,
