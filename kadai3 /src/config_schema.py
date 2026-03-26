@@ -65,6 +65,7 @@ class TrainerConfig:
     grad_clip_norm: float = 1.0
     use_state: bool = True
     state_noise_std: float = 0.0
+    state_dropout: float = 0.0
 
 
 @dataclass

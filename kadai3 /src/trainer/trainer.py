@@ -12,11 +12,13 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         device: torch.device,
         state_noise_std: float = 0.0,
+        state_dropout: float = 0.0,
     ):
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.state_noise_std = float(state_noise_std)
+        self.state_dropout = float(state_dropout)
         self.loss_fn = nn.MSELoss()
 
     def _run_epoch(self, loader: DataLoader, train: bool) -> float:
@@ -32,6 +34,9 @@ class Trainer:
                 # followerのデータにノイズを加えてロバスト性を上げる
                 noise = torch.randn_like(state) * self.state_noise_std
                 state = state + noise
+            if self.state_dropout > 0.0 and train:
+                # state の一部をゼロ化して依存を弱める
+                state = nn.functional.dropout(state, p=self.state_dropout, training=True)
             pred, _, recon = self.model(image, state)
             if pred.ndim == 4:
                 # pred: [B,T,K,Da], action: [B,T,Da]なので形が合わない。ゆえに、actionをK個にずらして積み重ねる

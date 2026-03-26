@@ -219,6 +219,7 @@ def main(cfg):
         optimizer=optimizer,
         device=device,
         state_noise_std=float(cfg.trainer.state_noise_std),
+        state_dropout=float(getattr(cfg.trainer, "state_dropout", 0.0)),
     )
     for epoch in range(int(cfg.trainer.epochs)):
         epoch_logs = trainer.fit(train_loader, val_loader, epochs=1)[0]
@@ -239,14 +240,12 @@ def main(cfg):
         prefix="online",
     )
 
-    # Grad-CAM 可視化（学習データに対して1枚保存）
+    # Grad-CAM 可視化（学習データに対して3枚保存）
     try:
-        batch = next(iter(test_loader))
-        image = batch[0].to(device)  # [B,T,C,H,W]
-        state = batch[1].to(device)
-
+        train_eps, test_eps = load_episodes(cfg)
+        episodes = train_eps + test_eps
         last_conv = _find_last_conv(model.vision.encoder)
-        if last_conv is not None:
+        if last_conv is not None and episodes:
             activations: list[torch.Tensor] = []
             gradients: list[torch.Tensor] = []
 
@@ -259,52 +258,57 @@ def main(cfg):
             h_fwd = last_conv.register_forward_hook(_forward_hook)
             h_bwd = last_conv.register_full_backward_hook(_backward_hook)
 
-            model.zero_grad(set_to_none=True)
-            pred, _, _ = model(image, state)
-            if pred.ndim == 4:
-                pred = pred[:, :, 0, :]
-            score = pred[0, -1].mean()
-            score.backward()
+            groups = [(0, 29), (30, 59), (60, 99)]
+            for gi, (start, end) in enumerate(groups):
+                if start >= len(episodes):
+                    break
+                ep = episodes[start]
+                image = torch.tensor(ep["image"][0], dtype=torch.float32, device=device)  # t=0
+                state = torch.tensor(ep["state"][0], dtype=torch.float32, device=device)
+                image = image.unsqueeze(0).unsqueeze(0)  # [1,1,C,H,W]
+                state = state.unsqueeze(0).unsqueeze(0)  # [1,1,D]
+
+                model.zero_grad(set_to_none=True)
+                pred, _, _ = model(image, state)
+                if pred.ndim == 4:
+                    pred = pred[:, :, 0, :]
+                score = pred[0, 0].mean()
+                score.backward()
+
+                if activations and gradients:
+                    act = activations[-1][0]  # [C,h,w]
+                    grad = gradients[-1][0]
+                    weights = grad.mean(dim=(1, 2))
+                    cam = (weights[:, None, None] * act).sum(dim=0)
+                    cam = F.relu(cam)
+                    cam = cam - cam.min()
+                    cam = cam / (cam.max() + 1.0e-8)
+                    cam = cam.detach().cpu().numpy()
+
+                    img = image[0, 0].detach().cpu().numpy()
+                    if img.shape[0] == 1:
+                        img = np.repeat(img, 3, axis=0)
+                    img = np.transpose(img, (1, 2, 0))
+                    img = np.clip(img, 0.0, 1.0)
+
+                    import matplotlib.pyplot as plt
+
+                    plt.figure(figsize=(8, 4))
+                    plt.subplot(1, 2, 1)
+                    plt.imshow(img)
+                    plt.axis("off")
+                    plt.title(f"Input (ep {start})")
+                    plt.subplot(1, 2, 2)
+                    plt.imshow(img)
+                    plt.imshow(cam, cmap="jet", alpha=0.45)
+                    plt.axis("off")
+                    plt.title("Grad-CAM")
+                    plt.tight_layout()
+                    plt.savefig(fig_dir / f"gradcam_train_{start}-{end}.png", dpi=150, bbox_inches="tight")
+                    plt.close()
 
             h_fwd.remove()
             h_bwd.remove()
-
-            if activations and gradients:
-                act = activations[0]
-                grad = gradients[0]
-                b, t, c, h, w = image.shape
-                idx = t - 1
-                feat = act[idx]  # [C,h,w]
-                g = grad[idx]
-                weights = g.mean(dim=(1, 2))
-                cam = (weights[:, None, None] * feat).sum(dim=0)
-                cam = F.relu(cam)
-                cam = cam - cam.min()
-                cam = cam / (cam.max() + 1.0e-8)
-                cam = cam.detach().cpu().numpy()
-
-                img = image[0, -1].detach().cpu().numpy()
-                if img.shape[0] == 1:
-                    img = np.repeat(img, 3, axis=0)
-                img = np.transpose(img, (1, 2, 0))
-                img = np.clip(img, 0.0, 1.0)
-
-                import matplotlib.pyplot as plt
-
-                # 左: 元画像 / 右: Grad-CAM重ね合わせ
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                plt.imshow(img)
-                plt.axis("off")
-                plt.title("Input")
-                plt.subplot(1, 2, 2)
-                plt.imshow(img)
-                plt.imshow(cam, cmap="jet", alpha=0.45)
-                plt.axis("off")
-                plt.title("Grad-CAM")
-                plt.tight_layout()
-                plt.savefig(fig_dir / "gradcam_train.png", dpi=150, bbox_inches="tight")
-                plt.close()
     except Exception:
         pass
     save_follower_plots(

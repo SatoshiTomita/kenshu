@@ -51,13 +51,31 @@ def _moving_avg(x: np.ndarray, win: int = 5) -> np.ndarray:
     return out
 
 # 各次元ごとに予想と実際の値をグラフに保存する
-def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: Path, prefix: str) -> None:
+def save_action_figs(
+    pred_all: np.ndarray,
+    gt_all: np.ndarray | None,
+    fig_dir: Path,
+    prefix: str,
+    episode_lengths: list[int] | None = None,
+) -> None:
     import matplotlib.pyplot as plt
 
     if pred_all.size == 0:
         return
     pred_s = _moving_avg(pred_all, win=5)
     gt_s = _moving_avg(gt_all, win=5) if gt_all is not None else None
+    pred_eps: list[np.ndarray] | None = None
+    gt_eps: list[np.ndarray] | None = None
+    if episode_lengths:
+        pred_eps = []
+        gt_eps = [] if gt_s is not None else None
+        start = 0
+        for ln in episode_lengths:
+            end = start + int(ln)
+            pred_eps.append(pred_s[start:end])
+            if gt_s is not None and gt_eps is not None:
+                gt_eps.append(gt_s[start:end])
+            start = end
     if prefix.startswith("online"):
         pred_s = np.clip(pred_s, -1.0, 1.0)
         if gt_s is not None:
@@ -67,9 +85,16 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
     for d in range(n_dims):
         fig = plt.figure(figsize=(10, 4))
         ax = fig.add_subplot(111)
-        ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
-        if gt_s is not None:
-            ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        if pred_eps is not None:
+            for ep in pred_eps:
+                ax.plot(np.arange(ep.shape[0]), ep[:, d], label="pred" if d == 0 else None, linewidth=1.0, alpha=0.8)
+            if gt_eps is not None:
+                for ep in gt_eps:
+                    ax.plot(np.arange(ep.shape[0]), ep[:, d], label="follower" if d == 0 else None, linewidth=1.0, alpha=0.8)
+        else:
+            ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+            if gt_s is not None:
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"{prefix} action dim {d} (smoothed)")
@@ -83,9 +108,16 @@ def save_action_figs(pred_all: np.ndarray, gt_all: np.ndarray | None, fig_dir: P
     for d in range(n_dims):
         r, c = divmod(d, ncols)
         ax = axes[r][c]
-        ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
-        if gt_s is not None:
-            ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+        if pred_eps is not None:
+            for ep in pred_eps:
+                ax.plot(np.arange(ep.shape[0]), ep[:, d], label="pred" if d == 0 else None, linewidth=1.0, alpha=0.8)
+            if gt_eps is not None:
+                for ep in gt_eps:
+                    ax.plot(np.arange(ep.shape[0]), ep[:, d], label="follower" if d == 0 else None, linewidth=1.0, alpha=0.8)
+        else:
+            ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
+            if gt_s is not None:
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"Action dim {d} (smoothed)")
@@ -158,6 +190,37 @@ def save_chunked_action_overlay(
     fig.suptitle(title or "offline_replay action (chunked)", y=1.02)
     fig.tight_layout()
     fig.savefig(fig_dir / f"{prefix}_action_all_overlay.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_future_action_figs(
+    future_preds: list[np.ndarray],
+    fig_dir: Path,
+    prefix: str,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    if not future_preds:
+        return
+    arr = np.stack(future_preds, axis=0)  # [T, K, Da]
+    t_len, k_len, d_len = arr.shape
+    fig, axes = plt.subplots(nrows=d_len, ncols=1, figsize=(12, 2 * d_len), sharex=True)
+    if d_len == 1:
+        axes = [axes]
+    for d, ax in enumerate(axes):
+        for k in range(k_len):
+            # 各時刻tからkステップ先までの予測軌道を短い線で描く
+            for t in range(t_len):
+                xs = np.arange(t, t + k_len)
+                ys = arr[t, :, d]
+                ax.plot(xs, ys, linewidth=1.4, alpha=0.3, color="tab:blue")
+        ax.set_ylim(-1.05, 1.05)
+        ax.set_ylabel(f"dim {d}")
+        ax.grid(True, alpha=0.3)
+    axes[-1].set_xlabel("t (prediction time)")
+    fig.suptitle(f"{prefix} future action (per-step horizon)", y=1.02)
+    fig.tight_layout()
+    fig.savefig(fig_dir / f"{prefix}_future_action_all.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -239,6 +302,7 @@ def online_test(
     all_gt: list[np.ndarray] = []
     mse_values: list[float] = []
     saved_gif = False
+    episode_lengths: list[int] = []
 
     with torch.no_grad():
         for image, state, action in loader:
@@ -270,20 +334,29 @@ def online_test(
             if pred.ndim == 4:
                 pred = pred[:, :, 0, :]
 
-            pred_np = pred.detach().cpu().numpy().reshape(-1, pred.shape[-1])
-            gt_np = action.detach().cpu().numpy().reshape(-1, action.shape[-1])
+            pred_np = pred.detach().cpu().numpy()
+            gt_np = action.detach().cpu().numpy()
 
             # EpisodeDataset で既に正規化済みなので、そのまま比較・描画する
             mse_values.append(float(np.mean((pred_np - gt_np) ** 2)))
 
-            all_pred.append(pred_np)
-            all_gt.append(gt_np)
+            # エピソード単位で保存
+            for b in range(pred_np.shape[0]):
+                all_pred.append(pred_np[b])
+                all_gt.append(gt_np[b])
+                episode_lengths.append(int(pred_np[b].shape[0]))
 
     pred_all = np.concatenate(all_pred, axis=0) if all_pred else np.zeros((0, 1), dtype=np.float32)
     gt_all = np.concatenate(all_gt, axis=0) if all_gt else np.zeros((0, 1), dtype=np.float32)
     mse = float(np.mean(mse_values)) if mse_values else float("nan")
 
-    save_action_figs(pred_all=pred_all, gt_all=gt_all, fig_dir=fig_dir, prefix=prefix)
+    save_action_figs(
+        pred_all=pred_all,
+        gt_all=gt_all,
+        fig_dir=fig_dir,
+        prefix=prefix,
+        episode_lengths=episode_lengths if episode_lengths else None,
+    )
     return {f"{prefix}_mse": mse, "num_samples": int(len(pred_all))}
 
 # 実機でのテストコード
@@ -345,6 +418,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             time.sleep(0.2)
 
     pred_actions: list[np.ndarray] = []
+    future_preds: list[np.ndarray] = []
     gt_states: list[np.ndarray] = []
     frames: list[Image.Image] = []
 
@@ -362,10 +436,6 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     h: torch.Tensor | None = None
     action_horizon = int(getattr(cfg.policy, "action_horizon", 1) or 1)
-    action_chunk = int(getattr(cfg.replay, "action_chunk", 1) or 1)
-    chunk = max(action_horizon, action_chunk, 1)
-    cached_actions: np.ndarray | None = None
-    cached_idx = 0
     chunk_starts: list[int] = []
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
     for step_idx in range(int(cfg.replay.steps)):
@@ -425,18 +495,17 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         state_in = torch.tensor(state_np, dtype=torch.float32, device=device).unsqueeze(0)  # [1,1,D]
 
         # --- 5. モデルによる推論（意思決定） ---
-        if step_idx % chunk == 0 or cached_actions is None or cached_idx >= len(cached_actions):
-            with torch.no_grad():
-                action_seq, h = model.forward_step(image_in, state_in, h)
-                h = h.detach() if h is not None else None
-                if action_seq.ndim == 4:
-                    cached_actions = action_seq[0, 0].detach().cpu().numpy()
-                else:
-                    cached_actions = action_seq[0, 0].detach().cpu().numpy()[None, :]
-            cached_idx = 0
-            chunk_starts.append(len(pred_actions))
-        action_normed = cached_actions[min(cached_idx, len(cached_actions) - 1)]
-        cached_idx += 1
+        with torch.no_grad():
+            action_seq, h = model.forward_step(image_in, state_in, h)
+            h = h.detach() if h is not None else None
+            if action_seq.ndim == 4:
+                # 未来予測も保存
+                future = action_seq[0, 0].detach().cpu().numpy()  # [K,Da]
+                future_preds.append(future)
+                action_normed = future[0]
+            else:
+                action_normed = action_seq[0, 0].detach().cpu().numpy()
+        chunk_starts.append(len(pred_actions))
         print(f"Action predicted (normalized): {action_normed}")
 
         # 正規化された数値を「実際のロボットの角度」に復元（逆正規化）
@@ -475,6 +544,12 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             pred_arr = pred_arr[:, :d]
             gt_arr = gt_arr[:, :d]
         save_action_figs(pred_all=pred_arr, gt_all=gt_arr, fig_dir=fig_dir, prefix="offline_replay")
+        if future_preds:
+            save_future_action_figs(
+                future_preds=future_preds,
+                fig_dir=fig_dir,
+                prefix="offline_replay",
+            )
         if chunk_starts:
             # 実機フォロワーとの比較
             save_chunked_action_overlay(
