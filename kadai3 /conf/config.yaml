@@ -74,7 +74,7 @@ replay:
   # replayを起動するかどうか
   enable: true
   # model name in result/ (if set, overrides train_name for loading)
-  model_name: "3-26_state_dropout_noise=0.05"
+  model_name: "3-26_state_dropout_noise=0.05_new"
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 40
   # send loop rate (camera fps is not set here)

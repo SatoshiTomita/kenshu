@@ -195,6 +195,7 @@ def save_chunked_action_overlay(
 
 def save_future_action_figs(
     future_preds: list[np.ndarray],
+    leader_traj_eps: list[np.ndarray] | None,
     fig_dir: Path,
     prefix: str,
 ) -> None:
@@ -213,7 +214,21 @@ def save_future_action_figs(
             for t in range(t_len):
                 xs = np.arange(t, t + k_len)
                 ys = arr[t, :, d]
-                ax.plot(xs, ys, linewidth=1.4, alpha=0.3, color="tab:blue")
+                ax.plot(xs, ys, linewidth=3.2, alpha=0.45, color="tab:blue")
+        if leader_traj_eps:
+            for i, ep in enumerate(leader_traj_eps):
+                if ep.shape[1] <= d:
+                    continue
+                x = np.arange(min(ep.shape[0], t_len))
+                ax.plot(
+                    x,
+                    ep[: len(x), d],
+                    linewidth=0.9,
+                    alpha=0.25,
+                    color="black",
+                    zorder=1,
+                    label="train leader" if d == 0 and i == 0 else None,
+                )
         ax.set_ylim(-1.05, 1.05)
         ax.set_ylabel(f"dim {d}")
         ax.grid(True, alpha=0.3)
@@ -545,8 +560,19 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             gt_arr = gt_arr[:, :d]
         save_action_figs(pred_all=pred_arr, gt_all=gt_arr, fig_dir=fig_dir, prefix="offline_replay")
         if future_preds:
+            leader_traj_eps = None
+            try:
+                train_eps, test_eps = load_episodes(cfg)
+                leader_traj_eps = [
+                    action_norm.normalize(np.asarray(ep["action"], dtype=np.float32))
+                    for ep in (train_eps + test_eps)
+                    if len(ep.get("action", [])) > 0
+                ]
+            except Exception:
+                leader_traj_eps = None
             save_future_action_figs(
                 future_preds=future_preds,
+                leader_traj_eps=leader_traj_eps,
                 fig_dir=fig_dir,
                 prefix="offline_replay",
             )
