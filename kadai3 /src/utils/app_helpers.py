@@ -29,6 +29,7 @@ def build_model(cfg, state_dim: int, action_dim: int) -> nn.Module:
         strides=list(cfg.vision.strides),
         paddings=list(cfg.vision.paddings),
         feature_dim=cfg.vision.feature_dim,
+        pool_type=getattr(cfg.vision, "pool_type", "avg"),
     )
     policy = PolicyNetwork(
         input_dim=cfg.vision.feature_dim + state_dim,
@@ -385,9 +386,10 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     from lerobot_utils import Replay  # type: ignore
     from PIL import Image, ImageDraw, ImageFont
 
-    fig_dir = _ensure_fig_subdir(fig_dir, "offline")
+    base_fig_dir = fig_dir
+    fig_dir = _ensure_fig_subdir(base_fig_dir, "offline")
     overlay_dir = _ensure_fig_subdir(fig_dir, "overlay")
-    future_dir = _ensure_fig_subdir(fig_dir, "future")
+    future_dir = _ensure_fig_subdir(base_fig_dir, "future")
     camera_dir = _ensure_fig_subdir(fig_dir, "camera")
 
     # --- 1. ハードウェアの初期化 ---
@@ -463,6 +465,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     h: torch.Tensor | None = None
     action_horizon = int(getattr(cfg.policy, "action_horizon", 1) or 1)
     chunk_starts: list[int] = []
+    warned_future_shape = False
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
     for step_idx in range(int(cfg.replay.steps)):
         # カメラ映像とロボットの現在の関節角度（state）を取得
@@ -524,6 +527,15 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         with torch.no_grad():
             action_seq, h = model.forward_step(image_in, state_in, h)
             h = h.detach() if h is not None else None
+            if action_horizon > 1 and action_seq.ndim != 4 and not warned_future_shape:
+                print(
+                    {
+                        "warn": "future_pred_shape_unexpected",
+                        "action_horizon": action_horizon,
+                        "action_seq_shape": tuple(action_seq.shape),
+                    }
+                )
+                warned_future_shape = True
             if action_seq.ndim == 4:
                 # 未来予測も保存
                 future = action_seq[0, 0].detach().cpu().numpy()  # [K,Da]
@@ -587,6 +599,9 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 fig_dir=future_dir,
                 prefix="offline_replay",
             )
+            print({"future_saved": str(future_dir / "offline_replay_future_action_all.png")})
+        elif action_horizon > 1:
+            print({"warn": "future_not_saved", "reason": "no_future_preds", "action_horizon": action_horizon})
         if chunk_starts:
             # 実機フォロワーとの比較
             save_chunked_action_overlay(

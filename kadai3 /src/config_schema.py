@@ -47,6 +47,7 @@ class VisionConfig:
     strides: list[int] = field(default_factory=lambda: [2, 2, 2])
     paddings: list[int] = field(default_factory=lambda: [2, 1, 1])
     feature_dim: int = 128
+    pool_type: str = "avg"
 
 
 @dataclass
