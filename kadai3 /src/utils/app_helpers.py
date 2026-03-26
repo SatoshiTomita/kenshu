@@ -15,6 +15,11 @@ from src.models.policy import PolicyNetwork
 from src.models.vision import VisionNetwork
 from src.models.vision_policy import VisionPolicyModel
 
+def _ensure_fig_subdir(fig_dir: Path, name: str) -> Path:
+    subdir = fig_dir / name
+    subdir.mkdir(parents=True, exist_ok=True)
+    return subdir
+
 # モデルの構築
 def build_model(cfg, state_dim: int, action_dim: int) -> nn.Module:
     vision = VisionNetwork(
@@ -312,6 +317,7 @@ def online_test(
 ) -> dict:
     from PIL import Image
 
+    fig_dir = _ensure_fig_subdir(fig_dir, "online")
     model.eval()
     all_pred: list[np.ndarray] = []
     all_gt: list[np.ndarray] = []
@@ -378,6 +384,11 @@ def online_test(
 def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Normalizer, device: torch.device, fig_dir: Path):
     from lerobot_utils import Replay  # type: ignore
     from PIL import Image, ImageDraw, ImageFont
+
+    fig_dir = _ensure_fig_subdir(fig_dir, "offline")
+    overlay_dir = _ensure_fig_subdir(fig_dir, "overlay")
+    future_dir = _ensure_fig_subdir(fig_dir, "future")
+    camera_dir = _ensure_fig_subdir(fig_dir, "camera")
 
     # --- 1. ハードウェアの初期化 ---
     # カメラやロボットアーム（USBポート）との接続を確立する
@@ -573,7 +584,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             save_future_action_figs(
                 future_preds=future_preds,
                 leader_traj_eps=leader_traj_eps,
-                fig_dir=fig_dir,
+                fig_dir=future_dir,
                 prefix="offline_replay",
             )
         if chunk_starts:
@@ -582,7 +593,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 pred_all=pred_arr,
                 gt_all=gt_arr,
                 chunk_starts=chunk_starts,
-                fig_dir=fig_dir,
+                fig_dir=overlay_dir,
                 prefix="offline_replay",
                 title="offline_replay action (vs real follower)",
                 label_gt="real follower",
@@ -597,7 +608,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                     pred_all=pred_arr,
                     gt_all=train_norm,
                     chunk_starts=chunk_starts,
-                    fig_dir=fig_dir,
+                    fig_dir=overlay_dir,
                     prefix="offline_replay_train",
                     title="offline_replay action (vs train follower)",
                     label_gt="train follower",
@@ -606,8 +617,8 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 try:
                     from PIL import Image
 
-                    left_path = fig_dir / "offline_replay_train_action_all_overlay.png"
-                    right_path = fig_dir / "joint_states_normalized.png"
+                    left_path = overlay_dir / "offline_replay_train_action_all_overlay.png"
+                    right_path = fig_dir.parent / "follower" / "joint_states_normalized.png"
                     if left_path.exists() and right_path.exists():
                         left = Image.open(left_path).convert("RGB")
                         right = Image.open(right_path).convert("RGB")
@@ -625,7 +636,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                     pass
 
     if frames:
-        gif_path = fig_dir / "online_camera.gif"
+        gif_path = camera_dir / "online_camera.gif"
         try:
             frames[0].save(
                 gif_path,

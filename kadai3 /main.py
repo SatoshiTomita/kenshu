@@ -31,6 +31,11 @@ from src.utils.train_utils import (
     split_indices,
 )
 
+def _ensure_fig_subdir(fig_dir: Path, name: str) -> Path:
+    subdir = fig_dir / name
+    subdir.mkdir(parents=True, exist_ok=True)
+    return subdir
+
 
 def _resolve_model_dir(cfg) -> Path:
     if getattr(cfg.replay, "model_name", ""):
@@ -163,6 +168,7 @@ def main(cfg):
             sample_count = min(4, len(tr_eps))
             from PIL import Image
 
+            aug_dir = _ensure_fig_subdir(fig_dir, "augment")
             for ep_idx in range(sample_count):
                 raw_eps = tr_eps[ep_idx]["image"]
                 # 1エピソード分をDatasetで取得（拡張後）
@@ -185,7 +191,7 @@ def main(cfg):
                     img = img.transpose(1, 2, 0)
                     img = np.clip(img, 0.0, 1.0) * 255.0
                     canvas[i * h : (i + 1) * h, w:2 * w] = img.astype(np.uint8)
-                Image.fromarray(canvas).save(fig_dir / f"augmented_compare_ep{ep_idx}.png")
+                Image.fromarray(canvas).save(aug_dir / f"augmented_compare_ep{ep_idx}.png")
         except Exception:
             pass
 
@@ -304,8 +310,9 @@ def main(cfg):
                     plt.axis("off")
                     plt.title("Grad-CAM")
                     plt.tight_layout()
-                    plt.savefig(fig_dir / f"gradcam_train_{start}-{end}.png", dpi=150, bbox_inches="tight")
-                    plt.close()
+                gradcam_dir = _ensure_fig_subdir(fig_dir, "gradcam")
+                plt.savefig(gradcam_dir / f"gradcam_train_{start}-{end}.png", dpi=150, bbox_inches="tight")
+                plt.close()
 
             h_fwd.remove()
             h_bwd.remove()
@@ -314,7 +321,7 @@ def main(cfg):
     save_follower_plots(
         episodes=tr_eps + val_eps + test_eps,
         state_norm=state_norm,
-        fig_dir=fig_dir,
+        fig_dir=_ensure_fig_subdir(fig_dir, "follower"),
         noise_std=float(cfg.trainer.state_noise_std),
     )
 
@@ -347,7 +354,8 @@ def main(cfg):
                 cidx * w * scale : (cidx + 1) * w * scale,
             ] = np.asarray(img_big)
 
-        Image.fromarray(canvas).save(fig_dir / "recon_grid.png")
+        recon_dir = _ensure_fig_subdir(fig_dir, "recon")
+        Image.fromarray(canvas).save(recon_dir / "recon_grid.png")
         break
 
     save_cfg(cfg, result_dir / "config.yaml")
