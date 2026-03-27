@@ -20,6 +20,7 @@ class Trainer:
         self.state_noise_std = float(state_noise_std)
         self.state_dropout = float(state_dropout)
         self.loss_fn = nn.MSELoss()
+        self._logged_shapes = False
 
     def _run_epoch(self, loader: DataLoader, train: bool) -> float:
         # 学習/評価で共通の1epoch処理（train=Trueなら勾配更新）
@@ -38,6 +39,9 @@ class Trainer:
                 # state の一部をゼロ化して依存を弱める
                 state = nn.functional.dropout(state, p=self.state_dropout, training=True)
             pred, _, recon = self.model(image, state)
+            # Shapes: image/state/action = [B, T, C, H, W] / [B, T, D] / [B, T, Da]
+            # pred = [B, T, Da] or [B, T, K, Da] (K=action_horizon), recon = [B, T, C, H, W]
+            # Daは関節の次元数
             if pred.ndim == 4:
                 # pred: [B,T,K,Da], action: [B,T,Da]なので形が合わない。ゆえに、actionをK個にずらして積み重ねる
                 b, t, k, da = pred.shape
@@ -54,6 +58,8 @@ class Trainer:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+            if not self._logged_shapes:
+                self._logged_shapes = True
             total += float(loss.item())
             count += 1
         return total / max(count, 1)

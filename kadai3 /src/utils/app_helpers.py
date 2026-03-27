@@ -483,6 +483,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     chunk_starts: list[int] = []
     warned_future_shape = False
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
+    logged_shapes = False
     for step_idx in range(int(cfg.replay.steps)):
         # カメラ映像とロボットの現在の関節角度（state）を取得
         obs = replay.get_observations(max_depth=cfg.replay.max_depth)
@@ -543,6 +544,15 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         with torch.no_grad():
             action_seq, h = model.forward_step(image_in, state_in, h)
             h = h.detach() if h is not None else None
+            if not logged_shapes:
+                print(
+                    {
+                        "shape_image_in": tuple(image_in.shape),
+                        "shape_state_in": tuple(state_in.shape),
+                        "shape_action_seq": tuple(action_seq.shape),
+                    }
+                )
+                logged_shapes = True
             if action_horizon > 1 and action_seq.ndim != 4 and not warned_future_shape:
                 print(
                     {
