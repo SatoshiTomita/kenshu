@@ -96,11 +96,18 @@ def save_action_figs(
                 ax.plot(np.arange(ep.shape[0]), ep[:, d], label="pred" if d == 0 else None, linewidth=1.0, alpha=0.8)
             if gt_eps is not None:
                 for ep in gt_eps:
-                    ax.plot(np.arange(ep.shape[0]), ep[:, d], label="follower" if d == 0 else None, linewidth=1.0, alpha=0.8)
+                    ax.plot(
+                        np.arange(ep.shape[0]),
+                        ep[:, d],
+                        label="follower" if d == 0 else None,
+                        linewidth=1.0,
+                        alpha=0.8,
+                        color="gray",
+                    )
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray")
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"{prefix} action dim {d} (smoothed)")
@@ -119,15 +126,23 @@ def save_action_figs(
                 ax.plot(np.arange(ep.shape[0]), ep[:, d], label="pred" if d == 0 else None, linewidth=1.0, alpha=0.8)
             if gt_eps is not None:
                 for ep in gt_eps:
-                    ax.plot(np.arange(ep.shape[0]), ep[:, d], label="follower" if d == 0 else None, linewidth=1.0, alpha=0.8)
+                    ax.plot(
+                        np.arange(ep.shape[0]),
+                        ep[:, d],
+                        label="follower" if d == 0 else None,
+                        linewidth=1.0,
+                        alpha=0.8,
+                        color="gray",
+                    )
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0)
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray")
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"Action dim {d} (smoothed)")
-        ax.legend()
+        if not prefix.startswith("online"):
+            ax.legend()
     for idx in range(n_dims, nrows * ncols):
         r, c = divmod(idx, ncols)
         axes[r][c].axis("off")
