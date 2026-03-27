@@ -101,17 +101,18 @@ def save_action_figs(
                         ep[:, d],
                         label="follower" if d == 0 else None,
                         linewidth=1.0,
-                        alpha=0.8,
+                        alpha=0.25,
                         color="gray",
                     )
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray")
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray", alpha=0.25)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"{prefix} action dim {d} (smoothed)")
-        ax.legend()
+        if not prefix.startswith("online"):
+            ax.legend()
         fig.savefig(fig_dir / f"{prefix}_action_dim_{d}.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
 
@@ -131,13 +132,13 @@ def save_action_figs(
                         ep[:, d],
                         label="follower" if d == 0 else None,
                         linewidth=1.0,
-                        alpha=0.8,
+                        alpha=0.25,
                         color="gray",
                     )
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray")
+                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray", alpha=0.25)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
         ax.set_title(f"Action dim {d} (smoothed)")

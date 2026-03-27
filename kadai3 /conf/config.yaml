@@ -1,5 +1,5 @@
 mode: train  # train | offline_test 
-train_name: 3-27_dropout0.7_epoch1500
+train_name: 3-27_dropout1.0_epoch1000
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: 3-27_dropout0.7_epoch1500
+    note: 3-27_dropout1.0_epoch1000
 
 dataset:
   root: data
@@ -69,7 +69,7 @@ trainer:
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
   state_noise_std: 0.05
-  state_dropout: 0.7
+  state_dropout: 1.0
 
 replay:
   # replayを起動するかどうか
