@@ -1,9 +1,0 @@
-{"time":"2026-03-14T12:14:26.792839+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
-{"time":"2026-03-14T12:14:27.362831+09:00","level":"INFO","msg":"stream: created new stream","id":"9lz3qgoz"}
-{"time":"2026-03-14T12:14:27.363416+09:00","level":"INFO","msg":"handler: started","stream_id":"9lz3qgoz"}
-{"time":"2026-03-14T12:14:27.363806+09:00","level":"INFO","msg":"sender: started","stream_id":"9lz3qgoz"}
-{"time":"2026-03-14T12:14:27.36382+09:00","level":"INFO","msg":"writer: started","stream_id":"9lz3qgoz"}
-{"time":"2026-03-14T12:14:27.364036+09:00","level":"INFO","msg":"stream: started","id":"9lz3qgoz"}
-{"time":"2026-03-14T12:37:34.936025+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/kadai3/9lz3qgoz/file_stream\": read tcp 192.168.221.137:56420->35.186.228.49:443: read: connection reset by peer"}
-{"time":"2026-03-14T12:50:50.187659+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/kadai3/9lz3qgoz/file_stream\": read tcp 192.168.221.137:56685->35.186.228.49:443: read: connection reset by peer"}
-{"time":"2026-03-14T12:52:37.31783+09:00","level":"INFO","msg":"stream: closing","id":"9lz3qgoz"}

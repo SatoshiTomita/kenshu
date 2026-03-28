@@ -1,7 +1,0 @@
-{"time":"2026-03-16T14:14:14.605173+09:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
-{"time":"2026-03-16T14:14:14.911654+09:00","level":"INFO","msg":"stream: created new stream","id":"93hzgg00"}
-{"time":"2026-03-16T14:14:14.911946+09:00","level":"INFO","msg":"handler: started","stream_id":"93hzgg00"}
-{"time":"2026-03-16T14:14:14.912656+09:00","level":"INFO","msg":"stream: started","id":"93hzgg00"}
-{"time":"2026-03-16T14:14:14.912692+09:00","level":"INFO","msg":"writer: started","stream_id":"93hzgg00"}
-{"time":"2026-03-16T14:14:14.912696+09:00","level":"INFO","msg":"sender: started","stream_id":"93hzgg00"}
-{"time":"2026-03-16T14:50:09.464873+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/s-tomita2023-keio-jp/kadai3/93hzgg00/file_stream\": read tcp 192.168.229.193:62857->35.186.228.49:443: read: can't assign requested address"}

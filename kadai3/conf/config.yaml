@@ -1,0 +1,105 @@
+mode: train  # train | offline_test 
+train_name: 3-28_specialsoftmax_dropout
+seed: 42
+result_root: result
+
+device: cpu  # auto | cpu | cuda | mps
+
+wandb:
+  enable: true
+  project: kadai3
+  run_name: ${train_name}
+  config:
+    note: 3-27_dropout1.0_epoch1000
+
+dataset:
+  root: data
+  train_dir: train
+  test_dir: test
+  left_dirname: left
+  right_dirname: right
+  variant: right_only  # right_only | both 入力データの切り替えに対応
+  # ファイル名の指定
+  action_states_filename: action_states.blosc2
+  image_states_filename: image_states.blosc2
+  joint_states_filename: joint_states.blosc2
+  # 
+  image_key: image
+  state_key: state
+  action_key: action
+  seq_len: 40
+  # train/val/testの分割比率
+  val_ratio: 0.20
+  test_ratio: 0
+  batch_size: 8
+  num_workers: 0
+  pin_memory: false
+  # 画像データ拡張
+  augment: true
+  # 画像全体の明るさ
+  aug_brightness: 0.2
+  # 画像全体のコントラスト
+  aug_contrast: 0.3
+  # 画像全体を最大1pxランダムにシフト
+  aug_shift: 1
+  # 画像全体を最大3pxランダムにクロップ
+  aug_crop: 1
+
+# vision networkの各種設定
+vision:
+  in_channels: 3
+  conv_channels: [16, 32, 64]
+  kernels: [3, 3, 3]
+  strides: [2, 2, 2]
+  paddings: [2, 1, 1]
+  feature_dim: 64
+  pool_type: spatial_softmax  # avg | spatial_softmax
+
+# policy networkの各種設定
+policy:
+  rnn_type: gru  # rnn | gru
+  hidden_dim: 32
+  num_layers: 1
+  action_horizon: 3
+
+# trainerの各種設定
+trainer:
+  epochs: 1000
+  learning_rate: 5e-4
+  weight_decay: 1.0e-4
+  grad_clip_norm: 1.0
+  state_noise_std: 0.05
+  state_dropout: 0.1
+
+replay:
+  # replayを起動するかどうか
+  enable: true
+  # model name in result/ (if set, overrides train_name for loading)
+  model_name: "3-26_horizon5_specialsoftmax"
+  model_path: ""  # empty means result/<train_name>/best_model.pt
+  steps: 40
+  # send loop rate (camera fps is not set here)
+  fps: 5
+  # テスト結果を実機に送るかどうか
+  send_action: true  
+  image_key: image.main
+  state_key: observation.state
+  max_depth: null
+  init_from_current_state: false
+  height: 480
+  width: 640
+  resize_height: 48
+  resize_width: 64
+  serial_numbers: []
+  camera_id: [0]
+  is_higher_port: false
+  leader_port: /dev/tty.usbmodem58370530001
+  follower_port: /dev/tty.usbmodem58370529971
+  calibration_name: koch
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job:
+    chdir: false
