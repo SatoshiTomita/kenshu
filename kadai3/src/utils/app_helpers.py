@@ -220,6 +220,7 @@ def save_future_action_figs(
     leader_traj_eps: list[np.ndarray] | None,
     fig_dir: Path,
     prefix: str,
+    warmup_steps: int = 0,
 ) -> None:
     import matplotlib.pyplot as plt
 
@@ -227,6 +228,7 @@ def save_future_action_figs(
         return
     arr = np.stack(future_preds, axis=0)  # [T, K, Da]
     t_len, k_len, d_len = arr.shape
+    shift = max(int(warmup_steps), 0)
     fig, axes = plt.subplots(nrows=d_len, ncols=1, figsize=(12, 2 * d_len), sharex=True)
     if d_len == 1:
         axes = [axes]
@@ -234,7 +236,7 @@ def save_future_action_figs(
         for k in range(k_len):
             # 各時刻tからkステップ先までの予測軌道を短い線で描く
             for t in range(t_len):
-                xs = np.arange(t, t + k_len)
+                xs = np.arange(t - shift, t - shift + k_len)
                 ys = arr[t, :, d]
                 ax.plot(xs, ys, linewidth=3.2, alpha=0.45, color="tab:blue")
         if leader_traj_eps:
@@ -251,6 +253,9 @@ def save_future_action_figs(
                     zorder=1,
                     label="train leader" if d == 0 and i == 0 else None,
                 )
+        # 表示範囲は warmup を引いた 0..(T-1-warmup) に固定
+        max_x = max(t_len - 1 - shift, 0)
+        ax.set_xlim(0, max_x)
         ax.set_ylim(-1.05, 1.05)
         ax.set_ylabel(f"dim {d}")
         ax.grid(True, alpha=0.3)
@@ -677,6 +682,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 leader_traj_eps=leader_traj_eps,
                 fig_dir=future_dir,
                 prefix="offline_replay",
+                warmup_steps=int(getattr(cfg.replay, "warmup_steps", 0) or 0),
             )
             print({"future_saved": str(future_dir / "offline_replay_future_action_all.png")})
         elif action_horizon > 1:
