@@ -76,6 +76,7 @@ class ReplayConfig:
     model_name: str = ""
     steps: int = 150
     fps: int = 30
+    warmup_steps: int = 0
     ema: float = 0.0
     split: int = 100
     send_action: bool = True
