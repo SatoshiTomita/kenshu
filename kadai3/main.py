@@ -244,6 +244,9 @@ def main(cfg):
         action_norm=action_norm,
         fig_dir=fig_dir,
         prefix="online",
+        chunk_weight_mode=getattr(cfg.policy, "action_chunk_weight_mode", "exp"),
+        chunk_weight_decay=float(getattr(cfg.policy, "action_chunk_weight_decay", 0.8)),
+        chunk_weights=list(getattr(cfg.policy, "action_chunk_weights", [])) or None,
     )
 
     # Grad-CAM 可視化（学習データに対して3枚保存）

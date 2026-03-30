@@ -56,6 +56,67 @@ def _moving_avg(x: np.ndarray, win: int = 5) -> np.ndarray:
         out[:, d] = np.convolve(x_pad[:, d], kernel, mode="valid")
     return out
 
+
+def _compute_chunk_weights(
+    k: int,
+    mode: str = "exp",
+    decay: float = 0.8,
+    custom: list[float] | None = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+) -> torch.Tensor:
+    k = int(k)
+    if k <= 0:
+        return torch.tensor([], device=device, dtype=dtype or torch.float32)
+    if custom is not None and not isinstance(custom, list):
+        custom = list(custom)
+    if custom is not None and len(custom) == k:
+        w = torch.tensor(custom, device=device, dtype=dtype or torch.float32)
+    else:
+        mode_l = str(mode or "exp").lower()
+        if custom is not None and len(custom) != k:
+            print({"warn": "chunk_weight_len_mismatch", "expected": k, "got": len(custom)})
+        if mode_l == "first":
+            w = torch.zeros(k, device=device, dtype=dtype or torch.float32)
+            w[0] = 1.0
+        elif mode_l == "linear":
+            w = torch.linspace(float(k), 1.0, k, device=device, dtype=dtype or torch.float32)
+        elif mode_l == "uniform":
+            w = torch.ones(k, device=device, dtype=dtype or torch.float32)
+        else:
+            # exp decay (default)
+            decay = float(decay)
+            w = torch.tensor([decay**i for i in range(k)], device=device, dtype=dtype or torch.float32)
+    s = w.sum()
+    if float(s) <= 0.0:
+        w = torch.ones(k, device=device, dtype=dtype or torch.float32)
+        s = w.sum()
+    return w / s
+
+
+def _weighted_chunk_avg(
+    chunk: torch.Tensor,
+    mode: str = "exp",
+    decay: float = 0.8,
+    custom: list[float] | None = None,
+) -> torch.Tensor:
+    # chunk: [K, Da]
+    k = int(chunk.shape[0])
+    w = _compute_chunk_weights(k, mode=mode, decay=decay, custom=custom, device=chunk.device, dtype=chunk.dtype)
+    return (chunk * w[:, None]).sum(dim=0)
+
+
+def _weighted_chunk_avg_batch(
+    pred: torch.Tensor,
+    mode: str = "exp",
+    decay: float = 0.8,
+    custom: list[float] | None = None,
+) -> torch.Tensor:
+    # pred: [B, T, K, Da]
+    k = int(pred.shape[2])
+    w = _compute_chunk_weights(k, mode=mode, decay=decay, custom=custom, device=pred.device, dtype=pred.dtype)
+    return (pred * w.view(1, 1, k, 1)).sum(dim=2)
+
 # 各次元ごとに予想と実際の値をグラフに保存する
 def save_action_figs(
     pred_all: np.ndarray,
@@ -336,6 +397,9 @@ def online_test(
     action_norm: Normalizer,
     fig_dir: Path,
     prefix: str = "online",
+    chunk_weight_mode: str = "exp",
+    chunk_weight_decay: float = 0.8,
+    chunk_weights: list[float] | None = None,
 ) -> dict:
     from PIL import Image
 
@@ -375,7 +439,12 @@ def online_test(
             action = action.to(device)
             pred, _, _ = model(image, state)
             if pred.ndim == 4:
-                pred = pred[:, :, 0, :]
+                pred = _weighted_chunk_avg_batch(
+                    pred,
+                    mode=chunk_weight_mode,
+                    decay=float(chunk_weight_decay),
+                    custom=chunk_weights,
+                )
 
             pred_np = pred.detach().cpu().numpy()
             gt_np = action.detach().cpu().numpy()
@@ -622,9 +691,14 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 warned_future_shape = True
             if action_seq.ndim == 4:
                 # 未来予測も保存
-                future = action_seq[0, -1].detach().cpu().numpy()  # [K,Da] (last step in window)
-                future_preds.append(future)
-                action_normed = future[0]
+                future_t = action_seq[0, -1]  # [K,Da] (last step in window)
+                future_preds.append(future_t.detach().cpu().numpy())
+                action_normed = _weighted_chunk_avg(
+                    future_t,
+                    mode=getattr(cfg.policy, "action_chunk_weight_mode", "exp"),
+                    decay=float(getattr(cfg.policy, "action_chunk_weight_decay", 0.8)),
+                    custom=getattr(cfg.policy, "action_chunk_weights", None),
+                ).detach().cpu().numpy()
             else:
                 action_normed = action_seq[0, -1].detach().cpu().numpy()
         chunk_starts.append(len(pred_actions))

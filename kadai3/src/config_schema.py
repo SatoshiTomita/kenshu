@@ -56,6 +56,9 @@ class PolicyConfig:
     hidden_dim: int = 128
     num_layers: int = 1
     action_horizon: int = 1
+    action_chunk_weight_mode: str = "exp"  # exp | linear | uniform | first
+    action_chunk_weight_decay: float = 0.8
+    action_chunk_weights: list[float] = field(default_factory=list)
 
 
 @dataclass
