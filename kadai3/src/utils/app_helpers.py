@@ -99,7 +99,7 @@ def save_action_figs(
                     ax.plot(
                         np.arange(ep.shape[0]),
                         ep[:, d],
-                        label="follower" if d == 0 else None,
+                        label="leader" if d == 0 else None,
                         linewidth=1.0,
                         alpha=0.25,
                         color="gray",
@@ -107,9 +107,10 @@ def save_action_figs(
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray", alpha=0.25)
+                ax.plot(gt_s[:, d], label="leader", linewidth=1.0, color="gray", alpha=0.25)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
+            ax.set_xlim(0, 40)
         ax.set_title(f"{prefix} action dim {d} (smoothed)")
         if not prefix.startswith("online"):
             ax.legend()
@@ -130,7 +131,7 @@ def save_action_figs(
                     ax.plot(
                         np.arange(ep.shape[0]),
                         ep[:, d],
-                        label="follower" if d == 0 else None,
+                        label="leader" if d == 0 else None,
                         linewidth=1.0,
                         alpha=0.25,
                         color="gray",
@@ -138,9 +139,10 @@ def save_action_figs(
         else:
             ax.plot(pred_s[:, d], label="pred", linewidth=1.0)
             if gt_s is not None:
-                ax.plot(gt_s[:, d], label="follower", linewidth=1.0, color="gray", alpha=0.25)
+                ax.plot(gt_s[:, d], label="leader", linewidth=1.0, color="gray", alpha=0.25)
         if prefix.startswith("online"):
             ax.set_ylim(-1.05, 1.05)
+            ax.set_xlim(0, 40)
         ax.set_title(f"Action dim {d} (smoothed)")
         if not prefix.startswith("online"):
             ax.legend()
@@ -331,6 +333,7 @@ def online_test(
     action_norm: Normalizer,
     fig_dir: Path,
     prefix: str = "online",
+    leader_action_all: np.ndarray | None = None,
 ) -> dict:
     from PIL import Image
 
@@ -388,13 +391,46 @@ def online_test(
     gt_all = np.concatenate(all_gt, axis=0) if all_gt else np.zeros((0, 1), dtype=np.float32)
     mse = float(np.mean(mse_values)) if mse_values else float("nan")
 
+    # 1本比較図は「同一エピソード」の leader(action) を使う
+    gt_plot_single = gt_all
+    # 重ね描き図用に、必要なら学習時leaderを使う（従来仕様）
+    # 長さは予測系列に合わせて切り詰める（足りなければ予測側を合わせる）。
+    gt_plot_alltraces = gt_all
+    if leader_action_all is not None and leader_action_all.size > 0:
+        gt_plot_alltraces = np.asarray(leader_action_all, dtype=np.float32)
+        if gt_plot_alltraces.shape[0] >= pred_all.shape[0]:
+            gt_plot_alltraces = gt_plot_alltraces[: pred_all.shape[0]]
+        else:
+            pred_all = pred_all[: gt_plot_alltraces.shape[0]]
+            gt_plot_single = gt_plot_single[: pred_all.shape[0]]
+            if episode_lengths:
+                remain = int(gt_plot_alltraces.shape[0])
+                new_lengths: list[int] = []
+                for ln in episode_lengths:
+                    take = min(int(ln), remain)
+                    if take <= 0:
+                        break
+                    new_lengths.append(take)
+                    remain -= take
+                episode_lengths = new_lengths
+
     save_action_figs(
         pred_all=pred_all,
-        gt_all=gt_all,
+        gt_all=gt_plot_single,
         fig_dir=fig_dir,
         prefix=prefix,
-        episode_lengths=episode_lengths if episode_lengths else None,
+        # online は「予測1本 vs リーダー1本」で見たいので、episode分割描画は使わない
+        episode_lengths=None if prefix.startswith("online") else (episode_lengths if episode_lengths else None),
     )
+    # online は追加で「全エピソード重ね描き」も別名で保存する
+    if prefix.startswith("online") and episode_lengths:
+        save_action_figs(
+            pred_all=pred_all,
+            gt_all=gt_plot_alltraces,
+            fig_dir=fig_dir,
+            prefix=f"{prefix}_alltraces",
+            episode_lengths=episode_lengths,
+        )
     return {f"{prefix}_mse": mse, "num_samples": int(len(pred_all))}
 
 # 実機でのテストコード
@@ -650,7 +686,24 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
                 d = min(pred_arr.shape[1], gt_arr.shape[1])
                 pred_arr = pred_arr[:, :d]
                 gt_arr = gt_arr[:, :d]
-            save_action_figs(pred_all=pred_arr, gt_all=gt_arr, fig_dir=fig_dir, prefix="offline_replay")
+            # 重ねる教師は学習データの action
+            train_actions = None
+            try:
+                train_eps, test_eps = load_episodes(cfg)
+                train_actions = [
+                    np.asarray(ep["action"], dtype=np.float32) for ep in (train_eps + test_eps) if len(ep.get("action", [])) > 0
+                ]
+            except Exception:
+                train_actions = None
+            gt_action = None
+            if train_actions:
+                train_all = np.concatenate(train_actions, axis=0).astype(np.float32)
+                gt_action = action_norm.normalize(train_all)
+                if gt_action.shape[0] >= pred_arr.shape[0]:
+                    gt_action = gt_action[: pred_arr.shape[0]]
+                else:
+                    pred_arr = pred_arr[: gt_action.shape[0]]
+            save_action_figs(pred_all=pred_arr, gt_all=gt_action, fig_dir=fig_dir, prefix="offline_replay")
 
     # 全ステップ終了後、アクションの推移グラフを保存して終了
     if pred_actions:
@@ -660,7 +713,24 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
             d = min(pred_arr.shape[1], gt_arr.shape[1])
             pred_arr = pred_arr[:, :d]
             gt_arr = gt_arr[:, :d]
-        save_action_figs(pred_all=pred_arr, gt_all=gt_arr, fig_dir=fig_dir, prefix="offline_replay")
+        # 重ねる教師は学習データの action
+        train_actions = None
+        try:
+            train_eps, test_eps = load_episodes(cfg)
+            train_actions = [
+                np.asarray(ep["action"], dtype=np.float32) for ep in (train_eps + test_eps) if len(ep.get("action", [])) > 0
+            ]
+        except Exception:
+            train_actions = None
+        gt_action = None
+        if train_actions:
+            train_all = np.concatenate(train_actions, axis=0).astype(np.float32)
+            gt_action = action_norm.normalize(train_all)
+            if gt_action.shape[0] >= pred_arr.shape[0]:
+                gt_action = gt_action[: pred_arr.shape[0]]
+            else:
+                pred_arr = pred_arr[: gt_action.shape[0]]
+        save_action_figs(pred_all=pred_arr, gt_all=gt_action, fig_dir=fig_dir, prefix="offline_replay")
         if future_preds:
             leader_traj_eps = None
             try:

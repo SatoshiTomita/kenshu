@@ -80,7 +80,7 @@ def main(cfg):
     result_dir.mkdir(parents=True, exist_ok=True)
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    # offline_test(推論)を行う処理
+    # online_test / offline_test（保存済みモデルで推論のみ）を行う処理
     if cfg.mode in ("online_test", "offline_test"):
         model_dir = _resolve_model_dir(cfg)
         fig_dir = model_dir / "fig"
@@ -100,8 +100,47 @@ def main(cfg):
             action_dim=len(action_norm.min),
             model_path=model_path,
         )
-        if cfg.replay.enable:
+        if cfg.mode == "offline_test" and cfg.replay.enable:
             run_replay(loaded_cfg, model=model, state_norm=state_norm, action_norm=action_norm, device=device, fig_dir=fig_dir)
+        elif cfg.mode == "online_test":
+            # 学習時と同じ分割で test episode を構成して online_test を実行
+            train_episodes, explicit_test_episodes = load_episodes(loaded_cfg)
+            if len(explicit_test_episodes) > 0:
+                train_idx, _, _ = split_indices(
+                    len(train_episodes), float(loaded_cfg.dataset.val_ratio), 0.0, int(cfg.seed)
+                )
+                tr_eps = [train_episodes[i] for i in train_idx]
+                test_eps = explicit_test_episodes
+            else:
+                train_idx, val_idx, test_idx = split_indices(
+                    len(train_episodes),
+                    float(loaded_cfg.dataset.val_ratio),
+                    float(loaded_cfg.dataset.test_ratio),
+                    int(cfg.seed),
+                )
+                tr_eps = [train_episodes[i] for i in train_idx]
+                val_eps = [train_episodes[i] for i in val_idx] if len(val_idx) > 0 else tr_eps
+                test_eps = [train_episodes[i] for i in test_idx] if len(test_idx) > 0 else val_eps
+
+            test_ds = EpisodeDataset(test_eps, state_norm, action_norm)
+            dataloader = myDataloader(
+                batch_size=int(loaded_cfg.dataset.batch_size),
+                num_workers=int(loaded_cfg.dataset.num_workers),
+                pin_memory=bool(loaded_cfg.dataset.pin_memory),
+            )
+            test_loader = dataloader.prepare_data(test_ds, shuffle=False)
+            online_metrics = online_test(
+                model=model,
+                loader=test_loader,
+                device=device,
+                action_norm=action_norm,
+                fig_dir=fig_dir,
+                prefix="online",
+                leader_action_all=action_norm.normalize(
+                    np.concatenate([np.asarray(ep["action"], dtype=np.float32) for ep in tr_eps], axis=0)
+                ) if tr_eps else None,
+            )
+            print({"online_mse": online_metrics["online_mse"], "num_samples": online_metrics["num_samples"]})
         print({"mode": str(cfg.mode), "device": str(device)})
         return
 
@@ -244,6 +283,9 @@ def main(cfg):
         action_norm=action_norm,
         fig_dir=fig_dir,
         prefix="online",
+        leader_action_all=action_norm.normalize(
+            np.concatenate([np.asarray(ep["action"], dtype=np.float32) for ep in tr_eps], axis=0)
+        ) if tr_eps else None,
     )
 
     # Grad-CAM 可視化（学習データに対して3枚保存）

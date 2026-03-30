@@ -46,10 +46,13 @@ class VisionNetwork(nn.Module):
         if self.pool_type == "spatial_softmax":
             self.pool = SpatialSoftmax()
             proj_in = conv_channels[-1] * 2
-        else:
+            self.proj = nn.Linear(proj_in, feature_dim)
+        elif self.pool_type == "avg":
             self.pool = nn.AdaptiveAvgPool2d((1, 1))
             proj_in = conv_channels[-1]
-        self.proj = nn.Linear(proj_in, feature_dim)
+            self.proj = nn.Linear(proj_in, feature_dim)
+        else:
+            raise ValueError(f"Unsupported pool_type: {pool_type}. Use 'avg' or 'spatial_softmax'.")
         # 簡易デコーダ（再構成用）
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(conv_channels[-1], conv_channels[-2], kernel_size=4, stride=2, padding=1),
@@ -66,7 +69,7 @@ class VisionNetwork(nn.Module):
         x = image.reshape(bsz * seq, c, h, w)
         x = self.encoder(x)
         x = self.pool(x)
-        if self.pool_type != "spatial_softmax":
+        if self.pool_type == "avg":
             x = x.squeeze(-1).squeeze(-1)
         x = self.proj(x)
         return x.reshape(bsz, seq, -1)
@@ -77,7 +80,7 @@ class VisionNetwork(nn.Module):
         x = image.reshape(bsz * seq, c, h, w)
         feat_map = self.encoder(x)
         pooled = self.pool(feat_map)
-        if self.pool_type != "spatial_softmax":
+        if self.pool_type == "avg":
             pooled = pooled.squeeze(-1).squeeze(-1)
         feat = self.proj(pooled).reshape(bsz, seq, -1)
         recon_flat = self.decoder(feat_map)

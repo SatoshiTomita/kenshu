@@ -1,4 +1,4 @@
-mode: offline_test  # train | offline_test 
+mode: online_test  # train | online_test | offline_test
 train_name: 3-28_warmup
 seed: 42
 result_root: result
@@ -64,12 +64,12 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 1000
+  epochs: 500
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
-  state_noise_std: 0.05
-  state_dropout: 0.5
+  state_noise_std: 0.1
+  state_dropout: 0
 
 replay:
   # replayを起動するかどうか
@@ -79,7 +79,7 @@ replay:
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 40
   # send loop rate (camera fps is not set here)
-  warmup_steps: 10
+  warmup_steps: 0
   fps: 5
   # テスト結果を実機に送るかどうか
   send_action: true  
