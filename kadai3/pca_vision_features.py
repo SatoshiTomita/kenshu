@@ -292,8 +292,8 @@ def main() -> None:
                 cmap=cmap_lc,
                 norm=norm,
             )
-            tick_vals = np.arange(0, n_ep + 1, 15)
-            cbar = plt.colorbar(sc, label="episode index", ticks=tick_vals)
+            cbar = plt.colorbar(sc, label="episode index")
+            cbar.set_ticks([])
             title_suffix = f" (t={args.time_index} only)"
         else:
             color_labels = np.arange(z.shape[0], dtype=np.int64) // 15
