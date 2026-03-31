@@ -451,8 +451,8 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         width=640,
         camera_id=(0,),
         is_higher_port=False,
-        leader_port="/dev/tty.usbmodem58370530001",
-        follower_port="/dev/tty.usbmodem58370529971",
+        leader_port="/dev/tty.usbmodem58370530381",
+        follower_port="/dev/tty.usbmodem578E0211451",
     )
 
     # 過去のデータを溜めておくための「待ち行列（キュー）」を用意
