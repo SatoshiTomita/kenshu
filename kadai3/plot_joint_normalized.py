@@ -18,6 +18,17 @@ def _load_blosc2_tensor(path: Path) -> np.ndarray:
     _, shape, dtype = schunk.vlmeta[b"__pack_tensor__"]
     return np.frombuffer(schunk[:], dtype=np.dtype(dtype)).reshape(shape)
 
+def _extend_tail(episodes: list[np.ndarray], k: int = 20) -> list[np.ndarray]:
+    out = []
+    for ep in episodes:
+        ep = np.asarray(ep, dtype=np.float32)
+        if len(ep) == 0:
+            out.append(ep)
+            continue
+        # 末尾をkステップ延長（最後の値を繰り返す）
+        pad = np.repeat(ep[-1:], k, axis=0)
+        out.append(np.concatenate([ep, pad], axis=0))
+    return out
 
 def _split_concat(arr: np.ndarray) -> list[np.ndarray]:
     if isinstance(arr, np.ndarray) and arr.dtype == object:
@@ -93,8 +104,8 @@ def main() -> None:
     joint_concat = _load_blosc2_tensor(joint_path)
     action_concat = _load_blosc2_tensor(action_path)
 
-    joint_eps = _split_concat(joint_concat)
-    action_eps = _split_concat(action_concat)
+    joint_eps = _extend_tail(joint_concat)
+    action_eps = _extend_tail(action_concat)
 
     _plot_normalized(
         episodes=joint_eps,
