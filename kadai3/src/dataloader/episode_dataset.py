@@ -332,4 +332,8 @@ class EpisodeDataset(Dataset):
             image = img_t.numpy()
         state = self.state_norm.normalize(ep["state"]).astype(np.float32)
         action = self.action_norm.normalize(ep["action"]).astype(np.float32)
+        k = 20  # 追加ステップ数
+        image = np.concatenate([image, np.repeat(image[0:1], k, axis=0)], axis=0)
+        state = np.concatenate([state, np.repeat(state[0:1], k, axis=0)], axis=0)
+        action = np.concatenate([action, np.repeat(action[0:1], k, axis=0)], axis=0)
         return image, state, action

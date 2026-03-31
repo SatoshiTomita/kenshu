@@ -518,50 +518,11 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
     action_horizon = int(getattr(cfg.policy, "action_horizon", 1) or 1)
     chunk_starts: list[int] = []
     input_len = int(getattr(cfg.replay, "input_len", 1) or 1)
-    warmup_steps = int(getattr(cfg.replay, "warmup_steps", 0) or 0)
     img_q: list[torch.Tensor] = []
     state_q: list[np.ndarray] = []
     warned_future_shape = False
     # --- 2. リアルタイム制御ループ（指定ステップ数分繰り返す） ---
     logged_shapes = False
-
-    # --- 2.5 予測のウォームアップ（送信せずに予測だけ回す） ---
-    for _ in range(max(warmup_steps, 0)):
-        obs = replay.get_observations(max_depth=cfg.replay.max_depth)
-        image = obs[cfg.replay.image_key]
-        state = np.asarray(obs[cfg.replay.state_key], dtype=np.float32)
-
-        image_t = torch.tensor(np.asarray(image), dtype=torch.float32)
-        if image_t.ndim == 3 and image_t.shape[0] not in (1, 3) and image_t.shape[-1] in (1, 3):
-            image_t = image_t.permute(2, 0, 1)
-        if image_t.max() > 1.0:
-            image_t = image_t / 255.0
-        if cfg.replay.resize_height is not None and cfg.replay.resize_width is not None:
-            image_t = F.interpolate(
-                image_t.unsqueeze(0),
-                size=(int(cfg.replay.resize_height), int(cfg.replay.resize_width)),
-                mode="bilinear",
-                align_corners=False,
-            ).squeeze(0)
-
-        state_np = state_norm.normalize(state[None, :])  # [1,D]
-        img_q.append(image_t)
-        state_q.append(state_np[0])
-        if len(img_q) < input_len:
-            continue
-        img_q = img_q[-input_len:]
-        state_q = state_q[-input_len:]
-
-        image_in = torch.stack(img_q, dim=0).unsqueeze(0).to(device)  # [B=1,S,C,H,W]
-        state_in = torch.tensor(np.stack(state_q, axis=0), dtype=torch.float32, device=device).unsqueeze(0)
-
-        with torch.no_grad():
-            if input_len == 1:
-                _, h = model.forward_step(image_in, state_in, h)
-                h = h.detach() if h is not None else None
-            else:
-                _, h = model(image_in, state_in, h=None)
-
     for step_idx in range(int(cfg.replay.steps)):
         # カメラ映像とロボットの現在の関節角度（state）を取得
         obs = replay.get_observations(max_depth=cfg.replay.max_depth)
