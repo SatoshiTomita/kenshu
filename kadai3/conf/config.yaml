@@ -1,5 +1,5 @@
 mode: train  # train | online_test | offline_test
-train_name: 3-31_newdata_fix
+train_name: 3-31_fixvision
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: 3-31_newdata_fix
+    note: 3-31_fixvision
 
 dataset:
   root: data
@@ -64,12 +64,12 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 500
+  epochs: 1000
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
   state_noise_std: 0.1
-  state_dropout: 0.2
+  state_dropout: 0.1
 
 replay:
   # replayを起動するかどうか
