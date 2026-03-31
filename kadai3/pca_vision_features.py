@@ -8,6 +8,9 @@
     uv run python pca_vision_features.py --model-dir result/my_run
 
     # ../result/run と指定した場合、kadai3/result/run にフォールバックする
+    #
+    # t=0 のみ（エピソード数=点数）:
+    #   uv run python pca_vision_features.py --model-dir result/my_run --time-index 0
 """
 
 from __future__ import annotations
@@ -69,9 +72,13 @@ def collect_vision_features(
     in_channels: int,
     batch_frames: int,
     max_frames: int,
+    time_index: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     各フレームの vision 特徴を [N, F] で返す。labels はエピソードインデックス [N]。
+
+    time_index が None のときは全フレーム。整数のときは各エピソードでその時刻の1枚だけ
+    （例: 0 なら t=0 のみ）→ N はエピソード数以下になる。
     """
     model.eval()
     feats_list: list[np.ndarray] = []
@@ -95,7 +102,13 @@ def collect_vision_features(
     for ep_idx, image in enumerate(tqdm(episodes, desc="episodes")):
         image = _match_in_channels(image, in_channels)
         tlen = image.shape[0]
-        for i in range(tlen):
+        if time_index is not None:
+            if tlen <= int(time_index):
+                continue
+            frame_indices = [int(time_index)]
+        else:
+            frame_indices = range(tlen)
+        for i in frame_indices:
             if max_frames > 0 and total >= max_frames:
                 flush(buf_img, buf_lbl)
                 return np.concatenate(feats_list, axis=0), np.concatenate(labels_list, axis=0)
@@ -165,6 +178,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--n-components", type=int, default=2, help="PCA の主成分数（散布図は先頭2成分）")
     parser.add_argument("--max-frames", type=int, default=0, help="0 なら全フレーム")
+    parser.add_argument(
+        "--time-index",
+        type=int,
+        default=None,
+        help="各エピソードでこの時刻の1枚だけ使う（例: 0 で t=0 のみ → 点数はエピソード数）。未指定なら全時刻",
+    )
     parser.add_argument("--batch-frames", type=int, default=256, help="GPU に載せるフレーム数（vision は B=1, S=batch）")
     parser.add_argument(
         "--out-dir",
@@ -210,6 +229,7 @@ def main() -> None:
         in_channels=in_ch,
         batch_frames=int(args.batch_frames),
         max_frames=int(args.max_frames),
+        time_index=args.time_index,
     )
 
     n_comp = min(int(args.n_components), feats.shape[1], feats.shape[0])
@@ -220,13 +240,15 @@ def main() -> None:
     out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    np.savez_compressed(
-        out_dir / "pca_result.npz",
-        features=feats.astype(np.float32),
-        embedding=z.astype(np.float32),
-        explained_variance_ratio=pca.explained_variance_ratio_.astype(np.float32),
-        episode_index=ep_labels,
-    )
+    save_kw: dict = {
+        "features": feats.astype(np.float32),
+        "embedding": z.astype(np.float32),
+        "explained_variance_ratio": pca.explained_variance_ratio_.astype(np.float32),
+        "episode_index": ep_labels,
+    }
+    if args.time_index is not None:
+        save_kw["time_index"] = np.int64(args.time_index)
+    np.savez_compressed(out_dir / "pca_result.npz", **save_kw)
 
     ev_path = out_dir / "explained_variance_ratio.txt"
     with ev_path.open("w") as f:
@@ -234,12 +256,32 @@ def main() -> None:
             f.write(f"PC{i+1}: {r:.6f}\n")
 
     if z.shape[1] >= 2:
+        if args.time_index is not None:
+            # 1点=1エピソードなので episode index をそのまま色に（カラーバーは 0〜最終エピソード番号）
+            color_labels = ep_labels.astype(np.float64)
+            cbar_label = "episode index"
+            cmap = "turbo"
+            title_suffix = f" (t={args.time_index} only)"
+            pt_size = 24
+        else:
+            color_labels = np.arange(z.shape[0], dtype=np.int64) // 15
+            cbar_label = "color group (every 15 frames)"
+            cmap = "tab20"
+            title_suffix = ""
+            pt_size = 4
         plt.figure(figsize=(7, 6))
-        sc = plt.scatter(z[:, 0], z[:, 1], c=ep_labels, s=4, alpha=0.6, cmap="tab20")
-        plt.colorbar(sc, label="episode index")
+        sc = plt.scatter(
+            z[:, 0],
+            z[:, 1],
+            c=color_labels,
+            s=pt_size,
+            alpha=0.7,
+            cmap=cmap,
+        )
+        plt.colorbar(sc, label=cbar_label)
         plt.xlabel("PC1")
         plt.ylabel("PC2")
-        plt.title("Vision features PCA (image_states.blosc2)")
+        plt.title(f"Vision features PCA (image_states.blosc2){title_suffix}")
         plt.tight_layout()
         plt.savefig(out_dir / "pca_scatter_pc1_pc2.png", dpi=150)
         plt.close()
@@ -250,6 +292,7 @@ def main() -> None:
             "image_blosc2": str(image_path),
             "num_episodes": len(episodes),
             "num_frames": int(feats.shape[0]),
+            "time_index": args.time_index,
             "feature_dim": int(feats.shape[1]),
             "out_dir": str(out_dir),
             "explained_variance_ratio": pca.explained_variance_ratio_.tolist(),
