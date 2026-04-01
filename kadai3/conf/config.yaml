@@ -1,5 +1,5 @@
 mode: train  # train | online_test | offline_test
-train_name: 4-1_feature_dim_action20
+train_name: 4-1_fix_vision_new
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: 4-1_feature_dim_action20
+    note: 4-1_fix_vision_new
 
 dataset:
   root: data
@@ -52,7 +52,7 @@ vision:
   kernels: [3, 3, 3]
   strides: [2, 2, 2]
   paddings: [2, 1, 1]
-  feature_dim: 128
+  feature_dim: 64
   pool_type: avg  # avg | spatial_softmax
 
 # policy networkの各種設定
@@ -64,18 +64,18 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 200
+  epochs: 1000
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0
-  state_noise_std: 0.1
-  state_dropout: 0.1
+  state_noise_std: 0.15
+  state_dropout: 0
 
 replay:
   # replayを起動するかどうか
   enable: true
   # model name in result/ (if set, overrides train_name for loading)
-  model_name: "3-28_warmup"
+  model_name: "3-31_fixvision"
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 60
   fps: 5

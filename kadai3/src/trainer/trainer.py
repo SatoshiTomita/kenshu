@@ -47,7 +47,8 @@ class Trainer:
                 b, t, k, da = pred.shape
                 if t < k:
                     raise RuntimeError("Sequence length is shorter than action_horizon.")
-                target = torch.stack([action[:, i+1 : i + t - k , :] for i in range(k)], dim=2)
+                # targetの時間長を (t-k) に合わせる
+                target = torch.stack([action[:, i + 1 : i + 1 + (t - k), :] for i in range(k)], dim=2)
                 pred_use = pred[:, : t - k , :, :]
                 loss_action = self.loss_fn(pred_use, target)
             else:
