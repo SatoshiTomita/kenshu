@@ -47,11 +47,13 @@ class Trainer:
                 b, t, k, da = pred.shape
                 if t < k:
                     raise RuntimeError("Sequence length is shorter than action_horizon.")
-                target = torch.stack([action[:, i : i + t - k + 1, :] for i in range(k)], dim=2)
-                pred_use = pred[:, : t - k + 1, :, :]
+                target = torch.stack([action[:, i+1 : i + t - k , :] for i in range(k)], dim=2)
+                pred_use = pred[:, : t - k , :, :]
                 loss_action = self.loss_fn(pred_use, target)
             else:
-                loss_action = self.loss_fn(pred, action)
+                if action.shape[1] < 2:
+                    raise RuntimeError("Sequence length must be >= 2 for 1-step-ahead target.")
+                loss_action = self.loss_fn(pred[:, :-1, :], action[:, 1:, :])
             loss_recon = self.loss_fn(recon, image)
             loss = loss_action + (1.0 * loss_recon)
             if train:
