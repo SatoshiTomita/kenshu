@@ -64,7 +64,7 @@ policy:
 
 # trainerの各種設定
 trainer:
-  epochs: 1000
+  epochs: 500
   learning_rate: 5e-4
   weight_decay: 1.0e-4
   grad_clip_norm: 1.0

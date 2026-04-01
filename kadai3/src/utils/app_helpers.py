@@ -268,15 +268,21 @@ def save_follower_plots(
     state_norm: Normalizer,
     fig_dir: Path,
     noise_std: float = 0.0,
+    states_norm: list[np.ndarray] | None = None,
 ) -> None:
     import matplotlib.pyplot as plt
 
     if not episodes:
         return
-    states = [np.asarray(ep["state"], dtype=np.float32) for ep in episodes if len(ep.get("state", [])) > 0]
-    if not states:
-        return
-    episodes_norm = [state_norm.normalize(s) for s in states]
+    if states_norm is not None:
+        episodes_norm = [np.asarray(s, dtype=np.float32) for s in states_norm if len(s) > 0]
+        if not episodes_norm:
+            return
+    else:
+        states = [np.asarray(ep["state"], dtype=np.float32) for ep in episodes if len(ep.get("state", [])) > 0]
+        if not states:
+            return
+        episodes_norm = [state_norm.normalize(s) for s in states]
     n_dims = episodes_norm[0].shape[1]
 
     def _plot_series(data_eps: list[np.ndarray], title: str, out_name: str) -> None:
@@ -371,7 +377,7 @@ def online_test(
             image = image.to(device)
             state = state.to(device)
             action = action.to(device)
-            pred, _, _ = model(image, state)
+            pred, _ = model(image, state)
             if pred.ndim == 4:
                 pred = pred[:, :, 0, :]
 

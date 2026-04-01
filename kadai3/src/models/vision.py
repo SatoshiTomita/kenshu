@@ -131,15 +131,6 @@ class VisionNetwork(nn.Module):
         )
         enc_out_dim = latent_obs_dim * 2
         self.proj = nn.Identity() if enc_out_dim == feature_dim else nn.Linear(enc_out_dim, feature_dim)
-        # 簡易デコーダ（再構成用）
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(conv_channels[-1], conv_channels[-2], kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose2d(conv_channels[-2], conv_channels[-3], kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose2d(conv_channels[-3], in_channels, kernel_size=4, stride=2, padding=1),
-            nn.Sigmoid(),
-        )
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
         # image: [B, S, C, H, W] -> feature: [B, S, F]
@@ -148,18 +139,3 @@ class VisionNetwork(nn.Module):
         x = self.encoder(x)
         x = self.proj(x)
         return x.reshape(bsz, seq, -1)
-
-    def forward_with_recon(self, image: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # image: [B, S, C, H, W] -> feature: [B, S, F], recon: [B, S, C, H, W]
-        bsz, seq, c, h, w = image.shape
-        x = image.reshape(bsz * seq, c, h, w)
-        feat_map = self.encoder.encoder(x)
-        flat = torch.flatten(feat_map, start_dim=1)
-        feat = self.proj(self.encoder.fc(flat)).reshape(bsz, seq, -1)
-        recon_flat = self.decoder(feat_map)
-        if recon_flat.shape[-2:] != (h, w):
-            recon_flat = torch.nn.functional.interpolate(
-                recon_flat, size=(h, w), mode="bilinear", align_corners=False
-            )
-        recon = recon_flat.reshape(bsz, seq, c, h, w)
-        return feat, recon

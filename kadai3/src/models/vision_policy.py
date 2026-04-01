@@ -20,13 +20,13 @@ class VisionPolicyModel(nn.Module):
         image: torch.Tensor,
         state: torch.Tensor,
         h: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         # 画像列から特徴量を抽出(I_tをi_tに変換)
-        feature, recon = self.vision.forward_with_recon(image)
+        feature = self.vision(image)
         # 特徴量とstateを使って行動を予測
         # PolicyNetworkに特徴量i_tとfollowerの関節q_tを渡し、Leaderの関節a_tを予測
         pred, h_next = self.policy(feature, state, h)
-        return pred, h_next, recon
+        return pred, h_next
 
     def forward_step(
         self,

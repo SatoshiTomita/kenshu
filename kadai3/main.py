@@ -317,7 +317,7 @@ def main(cfg):
                 state = state.unsqueeze(0).unsqueeze(0)  # [1,1,D]
 
                 model.zero_grad(set_to_none=True)
-                pred, _, _ = model(image, state)
+                pred, _ = model(image, state)
                 if pred.ndim == 4:
                     pred = pred[:, :, 0, :]
                 score = pred[0, 0].mean()
@@ -360,45 +360,19 @@ def main(cfg):
             h_bwd.remove()
     except Exception:
         pass
+    # EpisodeDataset経由（末尾パディング適用後）のstate系列を可視化に使う
+    padded_states_norm: list[np.ndarray] = []
+    for ds in (train_ds, val_ds, test_ds):
+        for i in range(len(ds)):
+            _, state_pad, _ = ds[i]
+            padded_states_norm.append(np.asarray(state_pad, dtype=np.float32))
     save_follower_plots(
         episodes=tr_eps + val_eps + test_eps,
         state_norm=state_norm,
         fig_dir=_ensure_fig_subdir(fig_dir, "follower"),
         noise_std=float(cfg.trainer.state_noise_std),
+        states_norm=padded_states_norm,
     )
-
-    # 再構成画像をグリッドで保存（学習後に1回、4枚を大きめに）
-    for image, state, _ in test_loader:
-        image = image.to(device)
-        state = state.to(device)
-        with torch.no_grad():
-            _, _, recon = model(image, state)
-        recon = recon[0].detach().cpu().numpy()  # [T,C,H,W]
-        n = min(4, recon.shape[0])
-        grid_h, grid_w = 2, 2
-        scale = 2
-        c = recon.shape[1]
-        h, w = recon.shape[2], recon.shape[3]
-        canvas = np.zeros((grid_h * h * scale, grid_w * w * scale, 3), dtype=np.uint8)
-        from PIL import Image
-
-        for i in range(n):
-            r, cidx = divmod(i, grid_w)
-            img = recon[i]
-            if img.shape[0] == 1:
-                img = np.repeat(img, 3, axis=0)
-            img = img.transpose(1, 2, 0)
-            img = np.clip(img, 0.0, 1.0) * 255.0
-            img_u8 = img.astype(np.uint8)
-            img_big = Image.fromarray(img_u8).resize((w * scale, h * scale), resample=Image.NEAREST)
-            canvas[
-                r * h * scale : (r + 1) * h * scale,
-                cidx * w * scale : (cidx + 1) * w * scale,
-            ] = np.asarray(img_big)
-
-        recon_dir = _ensure_fig_subdir(fig_dir, "recon")
-        Image.fromarray(canvas).save(recon_dir / "recon_grid.png")
-        break
 
     save_cfg(cfg, result_dir / "config.yaml")
     save_normalizers(state_norm, action_norm, result_dir / "normalizer.yaml")

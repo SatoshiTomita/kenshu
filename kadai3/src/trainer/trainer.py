@@ -38,9 +38,9 @@ class Trainer:
             if self.state_dropout > 0.0 and train:
                 # state の一部をゼロ化して依存を弱める
                 state = nn.functional.dropout(state, p=self.state_dropout, training=True)
-            pred, _, recon = self.model(image, state)
+            pred, _ = self.model(image, state)
             # Shapes: image/state/action = [B, T, C, H, W] / [B, T, D] / [B, T, Da]
-            # pred = [B, T, Da] or [B, T, K, Da] (K=action_horizon), recon = [B, T, C, H, W]
+            # pred = [B, T, Da] or [B, T, K, Da] (K=action_horizon)
             # Daは関節の次元数
             if pred.ndim == 4:
                 # pred: [B,T,K,Da], action: [B,T,Da]なので形が合わない。ゆえに、actionをK個にずらして積み重ねる
@@ -55,8 +55,7 @@ class Trainer:
                 if action.shape[1] < 2:
                     raise RuntimeError("Sequence length must be >= 2 for 1-step-ahead target.")
                 loss_action = self.loss_fn(pred[:, :-1, :], action[:, 1:, :])
-            loss_recon = self.loss_fn(recon, image)
-            loss = loss_action + (1.0 * loss_recon)
+            loss = loss_action
             if train:
                 self.optimizer.zero_grad()
                 loss.backward()
