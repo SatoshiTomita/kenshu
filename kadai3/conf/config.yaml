@@ -1,5 +1,5 @@
 mode: train  # train | online_test | offline_test
-train_name: 4-1_fix_vision_new
+train_name: 4-4_fix_vision_new
 seed: 42
 result_root: result
 
@@ -10,7 +10,7 @@ wandb:
   project: kadai3
   run_name: ${train_name}
   config:
-    note: 4-1_fix_vision_new
+    note: 4-4_fix_vision_new
 
 dataset:
   root: data
@@ -75,7 +75,7 @@ replay:
   # replayを起動するかどうか
   enable: true
   # model name in result/ (if set, overrides train_name for loading)
-  model_name: "3-31_fixvision"
+  model_name: "4-1_fix_vision_new"
   model_path: ""  # empty means result/<train_name>/best_model.pt
   steps: 60
   fps: 5
