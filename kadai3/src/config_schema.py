@@ -100,6 +100,9 @@ class ReplayConfig:
     leader_port: str = "/dev/tty.usbmodem58370530001"
     follower_port: str = "/dev/tty.usbmodem58370529971"
     calibration_name: str = "koch"
+    # offline replay でチャンク予測を時間方向に重み付き平均するか（false なら先頭1ステップのみ）
+    temporal_ensemble: bool = False
+    temporal_weight_decay: float = 0.8
 
 
 @dataclass

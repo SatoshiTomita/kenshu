@@ -95,6 +95,9 @@ replay:
   leader_port: /dev/tty.usbmodem58370530381
   follower_port: /dev/tty.usbmodem578E0211451
   calibration_name: koch
+  # true のときのみチャンク予測を時間方向に重み付き平均（Temporal Ensembling）
+  temporal_ensemble: false
+  temporal_weight_decay: 0.8
 
 hydra:
   run:

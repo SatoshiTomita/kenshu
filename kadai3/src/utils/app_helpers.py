@@ -522,6 +522,7 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
 
     h: torch.Tensor | None = None
     action_horizon = int(getattr(cfg.policy, "action_horizon", 1) or 1)
+    temporal_ensemble = bool(getattr(cfg.replay, "temporal_ensemble", False))
     temporal_weight_decay = float(getattr(cfg.replay, "temporal_weight_decay", 0.8) or 0.8)
     chunk_starts: list[int] = []
     input_len = int(getattr(cfg.replay, "input_len", 1) or 1)
@@ -631,25 +632,30 @@ def run_replay(cfg, model: nn.Module, state_norm: Normalizer, action_norm: Norma
         chunk_starts.append(len(pred_actions))
         chunk_actions_np = np.asarray(chunk_actions_np, dtype=np.float32)
         chunk_size = int(chunk_actions_np.shape[0])
-        action_dim = int(chunk_actions_np.shape[1])
-        replay_steps = int(cfg.replay.steps)
-        total_future_steps = replay_steps + max(chunk_size, action_horizon) + 1
-        if action_sum is None or action_count is None:
-            action_sum = np.zeros((total_future_steps, action_dim), dtype=np.float32)
-            action_count = np.zeros(total_future_steps, dtype=np.float32)
 
-        # Temporal Ensembling: 未来ステップごとに重み付きで予測を蓄積する
-        for i in range(chunk_size):
-            future_step = step_idx + i
-            if future_step >= action_sum.shape[0]:
-                break
-            weight = temporal_weight_decay ** i
-            action_sum[future_step] += chunk_actions_np[i] * weight
-            action_count[future_step] += weight
+        if temporal_ensemble:
+            action_dim = int(chunk_actions_np.shape[1])
+            replay_steps = int(cfg.replay.steps)
+            total_future_steps = replay_steps + max(chunk_size, action_horizon) + 1
+            if action_sum is None or action_count is None:
+                action_sum = np.zeros((total_future_steps, action_dim), dtype=np.float32)
+                action_count = np.zeros(total_future_steps, dtype=np.float32)
 
-        if action_count[step_idx] > 0:
-            action_normed = action_sum[step_idx] / action_count[step_idx]
+            # Temporal Ensembling: 未来ステップごとに重み付きで予測を蓄積する
+            for i in range(chunk_size):
+                future_step = step_idx + i
+                if future_step >= action_sum.shape[0]:
+                    break
+                weight = temporal_weight_decay ** i
+                action_sum[future_step] += chunk_actions_np[i] * weight
+                action_count[future_step] += weight
+
+            if action_count[step_idx] > 0:
+                action_normed = action_sum[step_idx] / action_count[step_idx]
+            else:
+                action_normed = chunk_actions_np[0]
         else:
+            # チャンク先頭のみ（アンサンブルなし）
             action_normed = chunk_actions_np[0]
 
         print(f"Action predicted (normalized): {action_normed}")
