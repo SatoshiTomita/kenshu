@@ -52,7 +52,7 @@ def _match_in_channels(image: np.ndarray, in_channels: int) -> np.ndarray:
     raise ValueError(f"Cannot map image channels {c} to vision.in_channels={in_channels}")
 
 
-def _grouped_episode_boundaries(n_ep: int, step: int = 15) -> np.ndarray:
+def _grouped_episode_boundaries(n_ep: int, step: int = 29) -> np.ndarray:
     """エピソード番号 0..n_ep-1 を step 個ごとに区切る BoundaryNorm 用境界（端数も1区間）。"""
     n_ep = max(int(n_ep), 1)
     edges = np.arange(-0.5, n_ep + 0.5, float(step))
@@ -179,7 +179,7 @@ def resolve_model_dir(arg: Path, kadai3: Path) -> Path:
 
 
 def main() -> None:
-    default_image = _KADAI3 / "src/data/right_tmp/image_states.blosc2"
+    default_image = _KADAI3 / "src/data/right_exist/image_states.blosc2"
     parser = argparse.ArgumentParser(description="PCA on vision features from a trained model.")
     parser.add_argument(
         "--model-dir",
@@ -279,7 +279,7 @@ def main() -> None:
             # 15 エピソードごとに同色。カラーバーは 0〜n_ep-1 の目盛り（離散、グラデーションなし）
             ep_int = ep_labels.astype(np.float64)
             n_ep = int(ep_labels.max()) + 1
-            boundaries = _grouped_episode_boundaries(n_ep, step=15)
+            boundaries = _grouped_episode_boundaries(n_ep, step=29)
             n_grp = len(boundaries) - 1
             cmap_lc = _discrete_cmap_n_colors(n_grp)
             norm = BoundaryNorm(boundaries, cmap_lc.N)
@@ -292,11 +292,9 @@ def main() -> None:
                 cmap=cmap_lc,
                 norm=norm,
             )
-            cbar = plt.colorbar(sc, label="episode index")
-            cbar.set_ticks([])
             title_suffix = f" (t={args.time_index} only)"
         else:
-            color_labels = np.arange(z.shape[0], dtype=np.int64) // 15
+            color_labels = np.arange(z.shape[0], dtype=np.int64) // 29
             sc = plt.scatter(
                 z[:, 0],
                 z[:, 1],
@@ -305,7 +303,6 @@ def main() -> None:
                 alpha=0.7,
                 cmap="tab20",
             )
-            plt.colorbar(sc, label="color group (every 15 frames)")
             title_suffix = ""
         plt.xlabel("PC1")
         plt.ylabel("PC2")
